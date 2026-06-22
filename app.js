@@ -1,7 +1,7 @@
 const CONFIG={appName:"Manajemen dan Pantauan Pengadaan Barang",shortName:"MANTAB",organizationName:"Divre",logoUrl:"assets/logo.svg",faviconUrl:"assets/favicon.svg",primaryColor:"#2563eb",secondaryColor:"#0f766e",accentColor:"#f59e0b",...(window.APP_CONFIG||{})};
 document.title=CONFIG.appName;document.documentElement.style.setProperty("--primary",CONFIG.primaryColor);document.documentElement.style.setProperty("--secondary",CONFIG.secondaryColor);document.documentElement.style.setProperty("--accent",CONFIG.accentColor);document.getElementById("favicon").href=CONFIG.faviconUrl;
 const DB_KEY="mpb_modern_db_v18_username",SESSION_KEY="mpb_modern_session_v18_username";
-const ROLES=["Admin","Bidang Terkait","PBJ","Kadivre","Legal","Wakadivre","Kadep Suike","Vendor","KSS Sarpra KPH","TPHP","PPHP","Kasi Sarpra","Kasi Angja","Korektor Pajak","Korektor Angja","KSS Angja","Umum"];
+const ROLES=["Admin","Bidang Terkait","PBJ","Kbukan adivre","Legal","Wakadivre","Kadep Suike","Vendor","KSS Sarpra KPH","TPHP","PPHP","Kasi Sarpra","Kasi Angja","Korektor Pajak","Korektor Angja","KSS Angja","Umum"];
 const MODULES=["Dashboard","Data Pengadaan","Input Pengadaan","Approval","Masa Pelaksanaan","Alokasi KPH","Pengiriman Barang","Penerimaan Barang","Monitoring Barang","Role & Permission","User Management","Branding"];
 const ACTIONS=["lihat","tambah","edit","hapus"];
 const s=(title,pic,days,detail)=>({title,pic,days,detail});
