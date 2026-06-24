@@ -3109,3 +3109,582 @@ render();
     render();
   }catch(e){console.error('Patch v32 tanggal otomatis gagal',e);}
 })();
+
+/* === PATCH v33: popup pemilih tanggal kalender, tanpa input manual === */
+(function(){
+  const MONTHS_FULL=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+  const MONTHS_SHORT=["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+  const DAYS_SHORT=["Min","Sen","Sel","Rab","Kam","Jum","Sab"];
+  const DAY_HEAD=["M","S","S","R","K","J","S"];
+  let openPicker=null;
+
+  function padV33(n){return String(n).padStart(2,"0");}
+  function isoFromDateV33(dt){return `${dt.getFullYear()}-${padV33(dt.getMonth()+1)}-${padV33(dt.getDate())}`;}
+  function dateFromIsoV33(iso){
+    const m=String(iso||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(!m) return null;
+    const dt=new Date(+m[1],+m[2]-1,+m[3]);
+    return Number.isNaN(dt.getTime())?null:dt;
+  }
+  function normalizeDateV33(v){
+    const raw=String(v||"").trim();
+    if(!raw) return "";
+    if(/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+    let m=raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+    if(m){
+      const d=+m[1], mo=+m[2], y=+m[3];
+      const dt=new Date(y,mo-1,d);
+      if(dt.getFullYear()===y && dt.getMonth()===mo-1 && dt.getDate()===d) return isoFromDateV33(dt);
+    }
+    const parsed=new Date(raw);
+    if(!Number.isNaN(parsed.getTime())) return isoFromDateV33(parsed);
+    return "";
+  }
+  function displayDateV33(iso){
+    const dt=dateFromIsoV33(normalizeDateV33(iso));
+    if(!dt) return "Pilih tanggal";
+    return `${DAYS_SHORT[dt.getDay()]}, ${dt.getDate()} ${MONTHS_SHORT[dt.getMonth()]} ${dt.getFullYear()}`;
+  }
+  function fieldTitleV33(input){
+    const label=input.closest?.(".field")?.querySelector?.("label")?.textContent?.trim();
+    return label || input.getAttribute("aria-label") || input.name || "Tanggal";
+  }
+  function updateDateButtonV33(input){
+    if(!input) return;
+    const iso=normalizeDateV33(input.value);
+    if(iso && input.value!==iso) input.value=iso;
+    const wrap=input.nextElementSibling?.classList?.contains("mpbDateSelectV33")?input.nextElementSibling:null;
+    const btn=wrap?.querySelector?.("[data-mpb-date-button]");
+    if(!btn) return;
+    btn.textContent=displayDateV33(input.value);
+    btn.title=input.readOnly||input.disabled?`${fieldTitleV33(input)} otomatis dari data lain`:`Klik untuk memilih ${fieldTitleV33(input).toLowerCase()}`;
+    btn.disabled=!!input.disabled;
+    btn.classList.toggle("is-empty",!normalizeDateV33(input.value));
+    btn.classList.toggle("is-readonly",!!input.readOnly);
+  }
+  function fireDateChangeV33(input){
+    updateDateButtonV33(input);
+    input.dispatchEvent(new Event("input",{bubbles:true}));
+    input.dispatchEvent(new Event("change",{bubbles:true}));
+    setTimeout(()=>updateAllDateButtonsV33(document),0);
+  }
+  function enhanceDateInputV33(input){
+    if(!input || input.dataset.mpbCalendarReadyV33==="1"){
+      updateDateButtonV33(input);
+      return;
+    }
+    if(input.type!=="date" && !input.classList.contains("date-id")) return;
+    const iso=normalizeDateV33(input.value);
+    if(iso) input.value=iso;
+    input.dataset.mpbCalendarReadyV33="1";
+    input.dataset.mpbDateName=input.name||"";
+    input.classList.add("mpbDateSourceV33");
+    try{input.type="hidden";}catch(e){input.style.display="none";}
+    const wrap=document.createElement("div");
+    wrap.className="mpbDateSelectV33";
+    const btn=document.createElement("button");
+    btn.type="button";
+    btn.className="mpbDateButtonV33";
+    btn.setAttribute("data-mpb-date-button","1");
+    btn.setAttribute("aria-label",`Pilih ${fieldTitleV33(input)}`);
+    wrap.appendChild(btn);
+    input.insertAdjacentElement("afterend",wrap);
+    btn.addEventListener("click",()=>{
+      if(input.disabled || input.readOnly) return;
+      openDatePickerV33(input);
+    });
+    input.addEventListener("input",()=>updateDateButtonV33(input));
+    input.addEventListener("change",()=>updateDateButtonV33(input));
+    updateDateButtonV33(input);
+  }
+  function enhanceCustomDateInputsV33(scope=document){
+    scope.querySelectorAll?.('input[type="date"], input.date-id').forEach(enhanceDateInputV33);
+    updateAllDateButtonsV33(scope);
+  }
+  function updateAllDateButtonsV33(scope=document){
+    scope.querySelectorAll?.('input[data-mpb-calendar-ready-v33="1"]').forEach(updateDateButtonV33);
+  }
+  function closeDatePickerV33(){
+    if(openPicker){
+      document.removeEventListener("keydown",openPicker.onKey,true);
+      openPicker.back.remove();
+      openPicker=null;
+    }
+  }
+  function sameDayV33(a,b){return !!a&&!!b&&a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
+  function openDatePickerV33(input){
+    closeDatePickerV33();
+    const initial=dateFromIsoV33(normalizeDateV33(input.value));
+    let selected=initial?new Date(initial):null;
+    let cursor=selected?new Date(selected):new Date();
+    const back=document.createElement("div");
+    back.className="mpbDatePickerBackV33";
+    back.innerHTML=`<div class="mpbDatePickerV33" role="dialog" aria-modal="true" aria-label="Pemilih tanggal">
+      <div class="mpbDatePickerTopV33">
+        <div class="mpbDateYearV33"></div>
+        <div class="mpbDateSelectedV33"></div>
+      </div>
+      <div class="mpbDateCalendarV33">
+        <div class="mpbDateMonthNavV33">
+          <button type="button" class="mpbDateNavV33" data-prev aria-label="Bulan sebelumnya">‹</button>
+          <strong data-month></strong>
+          <button type="button" class="mpbDateNavV33" data-next aria-label="Bulan berikutnya">›</button>
+        </div>
+        <div class="mpbDateGridV33 mpbDateDaysV33"></div>
+        <div class="mpbDateGridV33" data-grid></div>
+      </div>
+      <div class="mpbDateActionsV33">
+        <button type="button" class="mpbDateActionV33" data-clear>HAPUS</button>
+        <button type="button" class="mpbDateActionV33" data-cancel>BATAL</button>
+        <button type="button" class="mpbDateActionV33 primary" data-set>SETEL</button>
+      </div>
+    </div>`;
+    document.body.appendChild(back);
+    openPicker={back,onKey:(ev)=>{if(ev.key==="Escape") closeDatePickerV33();}};
+    document.addEventListener("keydown",openPicker.onKey,true);
+    const days=back.querySelector(".mpbDateDaysV33");
+    days.innerHTML=DAY_HEAD.map(x=>`<span>${x}</span>`).join("");
+    function renderPicker(){
+      const year=selected?selected.getFullYear():cursor.getFullYear();
+      const preview=selected?`${DAYS_SHORT[selected.getDay()]}, ${selected.getDate()} ${MONTHS_SHORT[selected.getMonth()]}`:"Pilih tanggal";
+      back.querySelector(".mpbDateYearV33").textContent=year;
+      back.querySelector(".mpbDateSelectedV33").textContent=preview;
+      back.querySelector("[data-month]").textContent=`${MONTHS_FULL[cursor.getMonth()]} ${cursor.getFullYear()}`;
+      const grid=back.querySelector("[data-grid]");
+      const first=new Date(cursor.getFullYear(),cursor.getMonth(),1).getDay();
+      const total=new Date(cursor.getFullYear(),cursor.getMonth()+1,0).getDate();
+      const today=new Date();
+      let html="";
+      for(let i=0;i<first;i++) html+='<span class="mpbDateBlankV33"></span>';
+      for(let day=1;day<=total;day++){
+        const dt=new Date(cursor.getFullYear(),cursor.getMonth(),day);
+        const cls=["mpbDateDayV33"];
+        if(sameDayV33(dt,today)) cls.push("is-today");
+        if(sameDayV33(dt,selected)) cls.push("is-selected");
+        html+=`<button type="button" class="${cls.join(" ")}" data-day="${day}" aria-label="${DAYS_SHORT[dt.getDay()]}, ${day} ${MONTHS_FULL[dt.getMonth()]} ${dt.getFullYear()}">${day}</button>`;
+      }
+      grid.innerHTML=html;
+    }
+    back.querySelector("[data-prev]").onclick=()=>{cursor=new Date(cursor.getFullYear(),cursor.getMonth()-1,1);renderPicker();};
+    back.querySelector("[data-next]").onclick=()=>{cursor=new Date(cursor.getFullYear(),cursor.getMonth()+1,1);renderPicker();};
+    back.querySelector("[data-clear]").onclick=()=>{input.value="";fireDateChangeV33(input);closeDatePickerV33();};
+    back.querySelector("[data-cancel]").onclick=()=>closeDatePickerV33();
+    back.querySelector("[data-set]").onclick=()=>{
+      if(!selected) selected=new Date(cursor.getFullYear(),cursor.getMonth(),cursor.getDate());
+      input.value=isoFromDateV33(selected);
+      fireDateChangeV33(input);
+      closeDatePickerV33();
+    };
+    back.querySelector("[data-grid]").onclick=(ev)=>{
+      const btn=ev.target.closest?.("[data-day]");
+      if(!btn) return;
+      selected=new Date(cursor.getFullYear(),cursor.getMonth(),+btn.dataset.day);
+      renderPicker();
+    };
+    back.addEventListener("mousedown",ev=>{if(ev.target===back) closeDatePickerV33();});
+    renderPicker();
+    setTimeout(()=>back.querySelector(".mpbDateDayV33.is-selected, .mpbDateDayV33.is-today, .mpbDateDayV33")?.focus?.(),0);
+  }
+
+  const bindPageBeforeV33=bindPage;
+  bindPage=function bindPage(){
+    try{bindPageBeforeV33();}catch(e){console.warn(e);}
+    enhanceCustomDateInputsV33(document);
+  };
+  const bindMultiFormsBeforeV33=bindMultiForms;
+  bindMultiForms=function bindMultiForms(){
+    try{bindMultiFormsBeforeV33();}catch(e){console.warn(e);}
+    enhanceCustomDateInputsV33(document);
+  };
+  const bindApprovalFormsBeforeV33=bindApprovalForms;
+  bindApprovalForms=function bindApprovalForms(){
+    try{bindApprovalFormsBeforeV33();}catch(e){console.warn(e);}
+    enhanceCustomDateInputsV33(document);
+  };
+  document.addEventListener("change",ev=>{
+    if(ev.target?.matches?.('[data-proc-select], select[name="vendor"]')) setTimeout(()=>updateAllDateButtonsV33(document),0);
+  },true);
+  try{
+    window.enhanceCustomDateInputsV33=enhanceCustomDateInputsV33;
+    enhanceCustomDateInputsV33(document);
+  }catch(e){console.error("Patch v33 pemilih tanggal gagal",e);}
+})();
+
+/* === PATCH v34: tombol Approval membuka bagian aktif dan dokumen pelengkap === */
+(function(){
+  function phaseForStepV34(stepId){
+    const safe=Math.min(Math.max(0,Number(stepId)||0),STEPS.length-1);
+    return STEPS[safe]?.phaseIndex || 0;
+  }
+  function activeStepV34(proc){
+    if(!proc) return 0;
+    return proc.currentStep<STEPS.length ? proc.currentStep : Math.max(0,STEPS.length-1);
+  }
+  function totalUsulanV34(proc){
+    const stored=Number(proc?.totalUsulan||0);
+    if(stored>0) return stored;
+    return (proc?.allocations||[]).reduce((sum,item)=>sum+(Number(item.volume)||0),0);
+  }
+  function satuanV34(proc){
+    const fromAlloc=(proc?.allocations||[]).find(a=>a.satuan)?.satuan;
+    return proc?.satuan || fromAlloc || "Unit";
+  }
+  function barangV34(proc){
+    const names=[...(proc?.allocations||[]).map(a=>a.jenisBarang||a.namaBarang), proc?.jenisBarang].filter(Boolean);
+    return [...new Set(names)].join(", ") || "Belum ada barang";
+  }
+  function docsForCurrentStepV34(proc){
+    const id=proc?.currentStep;
+    return (proc?.documents||[]).filter(d=>Number(d.stepId)===Number(id));
+  }
+  function currentGateV34(proc){
+    try{return gate(proc,proc.currentStep);}catch(e){return {ok:false,msg:"Tahapan belum siap."};}
+  }
+  function buttonLabelV34(proc){
+    const g=currentGateV34(proc);
+    if(!proc || proc.currentStep>=STEPS.length) return "Selesai";
+    if(g.ok) return "Buka untuk Approve";
+    return "Buka & Lengkapi";
+  }
+  function approvalStatusNoteV34(proc){
+    const g=currentGateV34(proc), docs=docsForCurrentStepV34(proc);
+    if(g.ok) return `<span class="badge green">Siap approve</span>`;
+    if(docs.length) return `<span class="badge blue">Dokumen ada</span>`;
+    return `<span class="badge yellow">Perlu dokumen</span>`;
+  }
+  function openApprovalTargetV34(id, fromRender=false){
+    const proc=db.procurements.find(p=>p.id===Number(id));
+    if(!proc) return toast("Pengadaan tidak ditemukan.");
+    const step=activeStepV34(proc);
+    state.page="approval";
+    state.forceApprovalProcV34=proc.id;
+    state.flowPhaseByProc=state.flowPhaseByProc||{};
+    state.flowStepByProc=state.flowStepByProc||{};
+    state.flowPhaseByProc[proc.id]=phaseForStepV34(step);
+    state.flowStepByProc[proc.id]=step;
+    if(fromRender){
+      setTimeout(()=>focusApprovalModalV34(proc.id),0);
+      return;
+    }
+    render();
+    setTimeout(()=>{
+      detail(proc.id);
+      focusApprovalModalV34(proc.id);
+    },0);
+  }
+  function focusApprovalModalV34(id){
+    const proc=db.procurements.find(p=>p.id===Number(id));
+    if(!proc) return;
+    const step=activeStepV34(proc);
+    state.flowPhaseByProc=state.flowPhaseByProc||{};
+    state.flowStepByProc=state.flowStepByProc||{};
+    state.flowPhaseByProc[proc.id]=phaseForStepV34(step);
+    state.flowStepByProc[proc.id]=step;
+    const modal=document.querySelector('.approvalDetailModal');
+    if(!modal) return;
+    const box=modal.querySelector('.currentApprovalBox') || modal.querySelector('.verticalStepDetailSlot') || modal.querySelector('.approvalVerticalWrap');
+    if(box){
+      box.classList.add('approvalFocusPulseV34');
+      try{box.scrollIntoView({behavior:'smooth',block:'center'});}catch(e){box.scrollIntoView();}
+      setTimeout(()=>box.classList.remove('approvalFocusPulseV34'),1500);
+    }
+  }
+  function actionButtonV34(proc){
+    if(!proc || proc.currentStep>=STEPS.length) return `<span class="badge green">Selesai</span>`;
+    const st=STEPS[proc.currentStep];
+    if(!isPic(st)) return `<span class="badge gray">PIC: ${esc(st?.pic||"-")}</span>`;
+    return `<button type="button" class="btn primary small" data-open-approval="${proc.id}">${esc(buttonLabelV34(proc))}</button>`;
+  }
+  function approvalCompactListV34(rows){
+    if(!rows.length) return `<div class="card empty">Tidak ada approval yang menjadi PIC Anda saat ini.</div>`;
+    return `<div class="approvalCompactList approvalV34List">${rows.map(proc=>{
+      const st=STEPS[proc.currentStep], ps=status(proc), du=due(proc), docs=docsForCurrentStepV34(proc);
+      return `<div class="approvalCompactRow approvalNeedsOpenV34 ${state.forceApprovalProcV34===proc.id?'activeV34':''}">
+        <button type="button" class="approvalNameClick" data-open-approval="${proc.id}" title="Buka bagian yang perlu di-approve">
+          <b>${esc(proc.nama)}</b>
+          <span>${esc(proc.bidang)} • ${esc(proc.jenisPengadaan)} • Total usulan ${numID(totalUsulanV34(proc))} ${esc(satuanV34(proc))}</span>
+          <small>Nama barang: ${esc(barangV34(proc))}</small>
+        </button>
+        <div class="approvalMeta"><span class="badge ${ps.color}">${esc(ps.text)}</span><span class="badge ${du.color}">${esc(du.text)}</span>${approvalStatusNoteV34(proc)}</div>
+        <div class="approvalStepNow"><small>Bagian yang perlu di-approve</small><b>${st?esc(st.title):"Selesai"}</b><span>PIC: ${st?esc(st.pic):"-"} • Dokumen: ${numID(docs.length)}</span></div>
+        <div class="approvalCompactAction">${actionButtonV34(proc)}</div>
+      </div>`;
+    }).join("")}</div>`;
+  }
+  approval=function approval(){
+    const apps=vis().filter(x=>x.currentStep<STEPS.length && isPic(STEPS[x.currentStep]));
+    return `<div class="head" style="margin-top:0"><div><h2>Antrian Approval Anda</h2><small>Klik tombol Buka untuk membuka bagian aktif, mengisi dokumen pelengkap, lalu melakukan approve.</small></div></div>
+      <div class="help ok"><b>Alur v34:</b> tombol approval tidak langsung menyetujui dari daftar. Sistem membuka detail tahapan aktif di tab Approval, lengkap dengan form dokumen pelengkap.</div>
+      <br>${approvalCompactListV34(apps)}`;
+  };
+  function bindOpenApprovalButtonsV34(scope=document){
+    scope.querySelectorAll?.('[data-open-approval]').forEach(btn=>{
+      btn.onclick=()=>openApprovalTargetV34(btn.dataset.openApproval);
+    });
+    scope.querySelectorAll?.('#content [data-approval-detail]').forEach(btn=>{
+      btn.onclick=()=>openApprovalTargetV34(btn.dataset.approvalDetail);
+    });
+    scope.querySelectorAll?.('#content [data-approve]').forEach(btn=>{
+      if(!btn.closest('.approvalDetailModal')){
+        btn.textContent=btn.textContent.trim().toLowerCase().includes('approve')?'Buka untuk Approve':'Buka Approval';
+        btn.setAttribute('title','Buka bagian yang perlu di-approve dan isi dokumen pelengkap');
+        btn.onclick=()=>openApprovalTargetV34(btn.dataset.approve);
+      }
+    });
+    scope.querySelectorAll?.('#content [data-detail]').forEach(btn=>{
+      const text=(btn.textContent||'').toLowerCase();
+      if(text.includes('approval') || text.includes('buka') || state.page==='procurements' || state.page==='dashboard' || state.page==='monitoring'){
+        btn.setAttribute('title','Buka tab Approval dan tampilkan bagian aktif');
+        btn.onclick=()=>openApprovalTargetV34(btn.dataset.detail);
+      }
+    });
+  }
+  const bindPageBeforeV34=bindPage;
+  bindPage=function bindPage(){
+    try{bindPageBeforeV34();}catch(e){console.warn(e);}
+    bindOpenApprovalButtonsV34(document);
+    if(state.page==='approval' && state.forceApprovalProcV34){
+      const id=state.forceApprovalProcV34;
+      state.forceApprovalProcV34=null;
+      setTimeout(()=>{
+        const proc=db.procurements.find(p=>p.id===Number(id));
+        if(proc){
+          detail(proc.id);
+          focusApprovalModalV34(proc.id);
+        }
+      },0);
+    }
+  };
+  const bindApprovalFormsBeforeV34=bindApprovalForms;
+  bindApprovalForms=function bindApprovalForms(){
+    try{bindApprovalFormsBeforeV34();}catch(e){console.warn(e);}
+    document.querySelectorAll('.approvalDetailModal [data-approve]').forEach(btn=>{
+      btn.onclick=()=>approve(Number(btn.dataset.approve));
+    });
+    document.querySelectorAll('.approvalDetailModal [data-open-active-approval-v34]').forEach(btn=>{
+      btn.onclick=()=>openApprovalTargetV34(btn.dataset.openActiveApprovalV34);
+    });
+    bindOpenApprovalButtonsV34(document.querySelector('#content')||document);
+  };
+  const detailBeforeV34=detail;
+  detail=function detail(id){
+    const proc=db.procurements.find(p=>p.id===Number(id));
+    if(proc){
+      const step=activeStepV34(proc);
+      state.flowPhaseByProc=state.flowPhaseByProc||{};
+      state.flowStepByProc=state.flowStepByProc||{};
+      state.flowPhaseByProc[proc.id]=phaseForStepV34(step);
+      state.flowStepByProc[proc.id]=step;
+    }
+    detailBeforeV34(id);
+    const modal=document.querySelector('.approvalDetailModal .modalBody');
+    if(proc && modal && !modal.querySelector('.approvalOpenBannerV34')){
+      const st=STEPS[proc.currentStep], g=currentGateV34(proc);
+      const banner=document.createElement('div');
+      banner.className='approvalOpenBannerV34';
+      banner.innerHTML=`<div><b>Bagian yang perlu di-approve</b><span>${st?esc(st.title):'Pengadaan selesai'}</span><small>${st?`PIC: ${esc(st.pic)} • ${esc(g.msg)}`:'Semua tahapan selesai.'}</small></div><button type="button" class="btn ghost small" data-open-active-approval-v34="${proc.id}">Buka bagian aktif</button>`;
+      modal.insertBefore(banner,modal.firstChild);
+    }
+    bindApprovalForms();
+    setTimeout(()=>focusApprovalModalV34(id),0);
+  };
+  const approveBeforeV34=approve;
+  approve=function approve(id){
+    const proc=db.procurements.find(p=>p.id===Number(id));
+    if(!proc) return toast('Pengadaan tidak ditemukan.');
+    if(!document.querySelector('.approvalDetailModal')){
+      return openApprovalTargetV34(proc.id);
+    }
+    return approveBeforeV34(Number(id));
+  };
+  try{
+    window.approval=approval;
+    window.bindPage=bindPage;
+    window.bindApprovalForms=bindApprovalForms;
+    window.detail=detail;
+    window.approve=approve;
+    window.openApprovalTargetV34=openApprovalTargetV34;
+    render();
+  }catch(e){console.error('Patch v34 approval buka bagian aktif gagal',e);}
+})();
+
+/* === PATCH v35: Approval tab shows only active approval section === */
+(function(){
+  function safeStepV35(proc){
+    if(!proc) return 0;
+    return proc.currentStep < STEPS.length ? proc.currentStep : Math.max(0, STEPS.length - 1);
+  }
+  function phaseForStepV35(stepId){
+    const safe=Math.min(Math.max(0, Number(stepId)||0), STEPS.length-1);
+    return STEPS[safe]?.phaseIndex || 0;
+  }
+  function docsForStepV35(proc, stepId){
+    proc.documents = proc.documents || [];
+    return proc.documents.filter(d=>Number(d.stepId)===Number(stepId));
+  }
+  function totalBarangV35(proc){
+    const fromAlloc=(proc.allocations||[]).reduce((sum,item)=>sum+(Number(item.volume)||0),0);
+    return fromAlloc || Number(proc.totalUsulan||0) || 0;
+  }
+  function namaBarangV35(proc){
+    const names=[...(proc.allocations||[]).map(a=>a.namaBarang||a.jenisBarang), proc.jenisBarang].filter(Boolean);
+    return [...new Set(names)].join(', ') || 'Belum ada barang';
+  }
+  function gateV35(proc){
+    try{return gate(proc, proc.currentStep);}catch(e){return {ok:false,msg:'Tahapan belum siap.'};}
+  }
+  function statusLabelV35(proc){
+    if(!proc || proc.currentStep>=STEPS.length) return `<span class="badge green">Selesai</span>`;
+    const g=gateV35(proc);
+    if(g.ok) return `<span class="badge green">Siap approve</span>`;
+    if(docsForStepV35(proc, proc.currentStep).length) return `<span class="badge blue">Dokumen tersedia</span>`;
+    return `<span class="badge yellow">Perlu dilengkapi</span>`;
+  }
+  function actionV35(proc){
+    if(!proc || proc.currentStep>=STEPS.length) return `<span class="badge green">Selesai</span>`;
+    const step=STEPS[proc.currentStep];
+    if(!isPic(step)) return `<span class="badge gray">PIC: ${esc(step?.pic||'-')}</span>`;
+    return `<button type="button" class="btn primary small" data-open-approval-v35="${proc.id}">Buka</button>`;
+  }
+  function approvalRowsV35(rows){
+    if(!rows.length) return `<div class="card empty">Tidak ada approval yang menjadi PIC Anda saat ini.</div>`;
+    return `<div class="approvalCompactList approvalV35List">${rows.map(proc=>{
+      const st=STEPS[proc.currentStep], ps=status(proc), du=due(proc), docs=docsForStepV35(proc, proc.currentStep);
+      return `<div class="approvalCompactRow approvalNeedsOpenV34 approvalNeedsOnlyV35">
+        <button type="button" class="approvalNameClick" data-open-approval-v35="${proc.id}" title="Buka bagian aktif saja">
+          <b>${esc(proc.nama)}</b>
+          <span>${esc(proc.bidang)} • ${esc(proc.jenisPengadaan)} • ${numID(totalBarangV35(proc))} ${esc(proc.satuan||'Unit')}</span>
+          <small>Nama barang: ${esc(namaBarangV35(proc))}</small>
+        </button>
+        <div class="approvalMeta"><span class="badge ${ps.color}">${esc(ps.text)}</span><span class="badge ${du.color}">${esc(du.text)}</span>${statusLabelV35(proc)}</div>
+        <div class="approvalStepNow"><small>Yang perlu di-approve</small><b>${st?esc(st.title):'Selesai'}</b><span>PIC: ${st?esc(st.pic):'-'} • Dokumen: ${numID(docs.length)}</span></div>
+        <div class="approvalCompactAction">${actionV35(proc)}</div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+  function approvalSummaryV35(proc){
+    const curStep=STEPS[proc.currentStep], ps=status(proc), du=due(proc);
+    return `<div class="kpiRow approvalKpi compactOnlyV35Kpi">
+      <div class="mini"><span>Status</span><b>${esc(ps.text)}</b></div>
+      <div class="mini"><span>Progress</span><b>${prog(proc)}%</b></div>
+      <div class="mini"><span>PIC Aktif</span><b style="font-size:18px">${curStep?esc(curStep.pic):'Selesai'}</b></div>
+      <div class="mini"><span>Tata Waktu</span><b style="font-size:18px">${esc(du.text)}</b></div>
+    </div>`;
+  }
+  function activeSectionV35(proc){
+    const st=STEPS[proc.currentStep];
+    if(!st) return `<div class="card pad approvalOnlyActiveV35"><div class="help ok"><b>Pengadaan selesai.</b> Semua tahapan approval sudah disetujui.</div></div>`;
+    const g=gateV35(proc), docs=docsForStepV35(proc, proc.currentStep), target=st.days===null?'Flexible':`${numID(st.days)} hari`;
+    return `<section class="approvalOnlyActiveV35 currentApprovalBox">
+      <div class="head compactHead" style="margin-top:0">
+        <div><h2>Bagian yang Perlu Di-approve</h2><small>Hanya tahapan aktif yang ditampilkan. Alur lengkap tidak ditampilkan di tab Approval.</small></div>
+        <div class="tools"><span class="badge teal">PIC: ${esc(st.pic)}</span><span class="badge ${g.ok?'green':'yellow'}">${g.ok?'Siap approve':'Perlu dilengkapi'}</span></div>
+      </div>
+      <div class="approvalStepSingleV35">
+        <div class="singleStepNumberV35">${proc.currentStep+1}</div>
+        <div class="singleStepMainV35">
+          <div class="kicker">Tahapan aktif</div>
+          <h3>${esc(st.title)}</h3>
+          <p>${esc(st.phase)} • Target: <b>${esc(target)}</b></p>
+          <div class="help"><b>Penjelasan:</b> ${esc(st.detail||'-')}</div>
+          <div class="help ${g.ok?'ok':'warn'}"><b>Status approval:</b> ${esc(g.msg)}</div>
+          <div class="docCountV35"><span class="badge ${docs.length?'blue':'yellow'}">Dokumen tahapan: ${numID(docs.length)}</span></div>
+        </div>
+      </div>
+      <div class="approvalOnlyNeedsV35">
+        ${typeof approvalCompletionForm === 'function' ? approvalCompletionForm(proc) : uploadRequirementPanel(proc, proc.currentStep)}
+      </div>
+      <div class="approvalStickyAction approvalOnlyActionV35">
+        ${isPic(st)?`<button type="button" class="btn primary" data-approve="${proc.id}" ${g.ok?'':'disabled'}>Approve Tahapan Ini</button>`:`<span class="badge gray">Menunggu PIC ${esc(st.pic)}</span>`}
+      </div>
+    </section>`;
+  }
+  function compactDetailV35(id){
+    const proc=db.procurements.find(p=>p.id===Number(id));
+    if(!proc) return toast('Pengadaan tidak ditemukan.');
+    proc.documents=proc.documents||[];
+    const step=safeStepV35(proc);
+    state.flowPhaseByProc=state.flowPhaseByProc||{};
+    state.flowStepByProc=state.flowStepByProc||{};
+    state.flowPhaseByProc[proc.id]=phaseForStepV35(step);
+    state.flowStepByProc[proc.id]=step;
+    document.getElementById('modalRoot').innerHTML=`<div class="modalBack"><div class="modal modalWide approvalDetailModal compactApprovalModalV35"><div class="modalHead"><div><h2>${esc(proc.nama)}</h2><small>${esc(proc.bidang)} • ${esc(proc.jenisPengadaan)} • ${numID(totalBarangV35(proc))} ${esc(proc.satuan||'Unit')}</small></div><div class="tools"><button type="button" class="btn ghost small" id="closeModal">Tutup</button></div></div><div class="modalBody">${approvalSummaryV35(proc)}<div class="help ok approvalCompactNoticeV35"><b>Tampilan ringkas:</b> tab Approval hanya membuka bagian aktif yang harus disetujui dan form kelengkapannya.</div>${activeSectionV35(proc)}</div></div></div>`;
+    const close=document.getElementById('closeModal');
+    if(close) close.onclick=()=>document.getElementById('modalRoot').innerHTML='';
+    try{bindApprovalForms();}catch(e){console.warn(e);}
+    try{bindContractForm(); bindMultiForms(); bindFormattedInputs();}catch(e){console.warn(e);}
+    try{window.enhanceCustomDateInputsV33?.(document);}catch(e){}
+    setTimeout(()=>{
+      const box=document.querySelector('.approvalOnlyActiveV35');
+      if(box){
+        box.classList.add('approvalFocusPulseV34');
+        try{box.scrollIntoView({behavior:'smooth',block:'center'});}catch(e){box.scrollIntoView();}
+        setTimeout(()=>box.classList.remove('approvalFocusPulseV34'),1200);
+      }
+    },0);
+  }
+  function openApprovalTargetV35(id){
+    const proc=db.procurements.find(p=>p.id===Number(id));
+    if(!proc) return toast('Pengadaan tidak ditemukan.');
+    state.page='approval';
+    state.forceApprovalProcV35=proc.id;
+    render();
+    setTimeout(()=>compactDetailV35(proc.id),0);
+  }
+  const approvalBeforeV35=approval;
+  approval=function approval(){
+    const apps=vis().filter(x=>x.currentStep<STEPS.length && isPic(STEPS[x.currentStep]));
+    return `<div class="head" style="margin-top:0"><div><h2>Antrian Approval Anda</h2><small>Klik Buka untuk menampilkan hanya bagian aktif yang perlu di-approve.</small></div></div>
+      <div class="help ok"><b>Mode ringkas:</b> tab Approval tidak menampilkan seluruh Alur Approval Pengadaan. Sistem hanya menampilkan tahapan aktif, syarat, dokumen pelengkap, dan tombol approve.</div>
+      <br>${approvalRowsV35(apps)}`;
+  };
+  function bindButtonsV35(scope=document){
+    scope.querySelectorAll?.('[data-open-approval-v35]').forEach(btn=>btn.onclick=()=>openApprovalTargetV35(btn.dataset.openApprovalV35));
+    scope.querySelectorAll?.('[data-open-approval]').forEach(btn=>btn.onclick=()=>openApprovalTargetV35(btn.dataset.openApproval));
+    scope.querySelectorAll?.('#content [data-approval-detail]').forEach(btn=>btn.onclick=()=>openApprovalTargetV35(btn.dataset.approvalDetail));
+    scope.querySelectorAll?.('#content [data-approve]').forEach(btn=>{
+      if(!btn.closest('.approvalDetailModal')){
+        btn.textContent='Buka';
+        btn.setAttribute('title','Buka bagian aktif yang perlu di-approve');
+        btn.onclick=()=>openApprovalTargetV35(btn.dataset.approve);
+      }
+    });
+    scope.querySelectorAll?.('#content [data-detail]').forEach(btn=>{
+      if(state.page==='approval' || state.page==='procurements' || state.page==='dashboard' || state.page==='monitoring'){
+        btn.setAttribute('title','Buka bagian aktif di tab Approval');
+        btn.onclick=()=>openApprovalTargetV35(btn.dataset.detail);
+      }
+    });
+  }
+  const bindPageBeforeV35=bindPage;
+  bindPage=function bindPage(){
+    try{bindPageBeforeV35();}catch(e){console.warn(e);}
+    bindButtonsV35(document);
+    if(state.page==='approval' && state.forceApprovalProcV35){
+      const id=state.forceApprovalProcV35;
+      state.forceApprovalProcV35=null;
+      setTimeout(()=>compactDetailV35(id),0);
+    }
+  };
+  const bindApprovalFormsBeforeV35=bindApprovalForms;
+  bindApprovalForms=function bindApprovalForms(){
+    try{bindApprovalFormsBeforeV35();}catch(e){console.warn(e);}
+    document.querySelectorAll('.approvalDetailModal [data-approve]').forEach(btn=>btn.onclick=()=>approve(Number(btn.dataset.approve)));
+    bindButtonsV35(document.querySelector('#content')||document);
+  };
+  const detailBeforeV35=detail;
+  detail=function detail(id){
+    if(state.page==='approval') return compactDetailV35(id);
+    return detailBeforeV35(id);
+  };
+  const approveBeforeV35=approve;
+  approve=function approve(id){
+    if(!document.querySelector('.approvalDetailModal')) return openApprovalTargetV35(id);
+    return approveBeforeV35(Number(id));
+  };
+  try{
+    window.openApprovalTargetV35=openApprovalTargetV35;
+    window.compactApprovalDetailV35=compactDetailV35;
+    render();
+  }catch(e){console.error('Patch v35 approval ringkas gagal', e);}
+})();
