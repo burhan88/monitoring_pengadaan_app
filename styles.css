@@ -99,3 +99,64 @@ input[type="file"]{padding:9px;background:#fff}
   .allocationItemTable{min-width:680px}
   .allocationItemTable th,.allocationItemTable td{padding:9px 10px}
 }
+
+/* === PATCH v33: popup pemilih tanggal kalender === */
+.mpbDateSourceV33{display:none!important}
+.mpbDateSelectV33{width:100%;display:flex;align-items:center;gap:8px}
+.mpbDateButtonV33{width:100%;min-height:44px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 42px 10px 14px;text-align:left;font:inherit;color:var(--text);cursor:pointer;position:relative;box-shadow:0 1px 0 rgba(15,23,42,.03)}
+.mpbDateButtonV33:after{content:"📅";position:absolute;right:13px;top:50%;transform:translateY(-50%);font-size:16px;opacity:.7}
+.mpbDateButtonV33:hover{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.mpbDateButtonV33:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.18)}
+.mpbDateButtonV33.is-empty{color:var(--muted)}
+.mpbDateButtonV33.is-readonly{cursor:not-allowed;background:#f8fafc;color:#64748b}
+.mpbDatePickerBackV33{position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,.42);display:flex;align-items:center;justify-content:center;padding:18px}
+.mpbDatePickerV33{width:min(330px,calc(100vw - 28px));background:#fff;border-radius:18px;box-shadow:0 28px 80px rgba(15,23,42,.35);overflow:hidden;color:#0f172a}
+.mpbDatePickerTopV33{background:var(--primary);color:#fff;padding:18px 22px 20px}
+.mpbDateYearV33{font-size:14px;font-weight:700;opacity:.85;margin-bottom:6px}
+.mpbDateSelectedV33{font-size:30px;line-height:1.15;font-weight:800;letter-spacing:-.03em;min-height:34px}
+.mpbDateCalendarV33{padding:18px 22px 8px}
+.mpbDateMonthNavV33{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.mpbDateMonthNavV33 strong{font-size:15px;font-weight:800}
+.mpbDateNavV33{border:0;background:transparent;border-radius:999px;width:36px;height:36px;font-size:28px;line-height:1;cursor:pointer;color:#334155;display:flex;align-items:center;justify-content:center}
+.mpbDateNavV33:hover,.mpbDateNavV33:focus{background:#f1f5f9;outline:none}
+.mpbDateGridV33{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.mpbDateDaysV33{margin-bottom:8px;color:#64748b;font-size:12px;font-weight:800}
+.mpbDateDaysV33 span{height:24px;display:flex;align-items:center;justify-content:center}
+.mpbDateBlankV33{height:36px}
+.mpbDateDayV33{border:0;background:transparent;border-radius:999px;height:36px;width:36px;justify-self:center;cursor:pointer;color:#334155;font-weight:700}
+.mpbDateDayV33:hover,.mpbDateDayV33:focus{background:#eff6ff;color:var(--primary);outline:none}
+.mpbDateDayV33.is-today{box-shadow:inset 0 0 0 1px var(--primary);color:var(--primary)}
+.mpbDateDayV33.is-selected{background:var(--primary);color:#fff;box-shadow:none}
+.mpbDateActionsV33{display:flex;justify-content:flex-end;gap:18px;padding:14px 20px 18px}
+.mpbDateActionV33{border:0;background:transparent;color:var(--primary);font-weight:900;letter-spacing:.04em;font-size:13px;cursor:pointer;padding:8px;border-radius:10px}
+.mpbDateActionV33:hover,.mpbDateActionV33:focus{background:#eff6ff;outline:none}
+.mpbDateActionV33.primary{color:var(--primary)}
+@media(max-width:420px){.mpbDatePickerBackV33{align-items:flex-end;padding:10px}.mpbDatePickerV33{width:100%;border-radius:18px 18px 14px 14px}.mpbDateSelectedV33{font-size:28px}}
+
+/* === PATCH v34: fokus bagian approval aktif === */
+.approvalNeedsOpenV34{border-left:4px solid transparent}
+.approvalNeedsOpenV34.activeV34{border-left-color:var(--primary);background:linear-gradient(90deg,rgba(37,99,235,.08),transparent)}
+.approvalOpenBannerV34{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;border:1px solid rgba(37,99,235,.25);background:#eff6ff;border-radius:16px;margin-bottom:14px}
+.approvalOpenBannerV34 b{display:block;color:#1e3a8a;font-size:14px}
+.approvalOpenBannerV34 span{display:block;font-weight:800;color:#0f172a;margin-top:2px}
+.approvalOpenBannerV34 small{display:block;color:#475569;margin-top:2px}
+.approvalFocusPulseV34{animation:approvalPulseV34 1.5s ease-out 1;scroll-margin:90px}
+@keyframes approvalPulseV34{0%{box-shadow:0 0 0 0 rgba(37,99,235,.38)}55%{box-shadow:0 0 0 8px rgba(37,99,235,.12)}100%{box-shadow:0 0 0 0 rgba(37,99,235,0)}}
+@media(max-width:720px){.approvalOpenBannerV34{align-items:flex-start;flex-direction:column}.approvalOpenBannerV34 .btn{width:100%}}
+
+/* === PATCH v35: compact approval-only detail === */
+.compactApprovalModalV35 .modalBody{padding-bottom:22px}
+.approvalNeedsOnlyV35 .approvalCompactAction .btn{min-width:86px}
+.approvalCompactNoticeV35{margin:14px 0 16px}
+.approvalOnlyActiveV35{background:#fff;border:1px solid var(--border);border-radius:18px;padding:18px;box-shadow:var(--shadow);margin-top:16px}
+.approvalStepSingleV35{display:grid;grid-template-columns:54px 1fr;gap:14px;align-items:start;margin-top:12px}
+.singleStepNumberV35{width:44px;height:44px;border-radius:14px;background:#e0f2fe;color:#075985;display:grid;place-items:center;font-weight:800;font-size:18px}
+.singleStepMainV35 h3{font-size:19px;line-height:1.25;margin:4px 0 4px;color:var(--text)}
+.singleStepMainV35 p{margin:0 0 10px;color:var(--muted);font-size:13px}
+.docCountV35{margin-top:10px}
+.approvalOnlyNeedsV35{margin-top:16px;border-top:1px dashed var(--border);padding-top:16px}
+.approvalOnlyActionV35{margin-top:16px;display:flex;justify-content:flex-end;gap:10px;position:sticky;bottom:0;background:linear-gradient(180deg,rgba(255,255,255,.72),#fff 45%);padding-top:14px;z-index:5}
+.compactOnlyV35Kpi .mini b{font-size:20px}
+.compactApprovalModalV35 .approvalVerticalWrap{display:none!important}
+.compactApprovalModalV35 .approvalOpenBannerV34{display:none!important}
+@media(max-width:720px){.approvalStepSingleV35{grid-template-columns:1fr}.singleStepNumberV35{width:38px;height:38px}.approvalOnlyActionV35{justify-content:stretch}.approvalOnlyActionV35 .btn{width:100%}}
