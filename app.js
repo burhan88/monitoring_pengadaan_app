@@ -1,7 +1,19 @@
-const CONFIG={appName:"Manajemen dan Pantauan Pengadaan Barang",shortName:"MANTAB",organizationName:"Divre",logoUrl:"assets/logo.svg",faviconUrl:"assets/favicon.svg",primaryColor:"#2563eb",secondaryColor:"#0f766e",accentColor:"#f59e0b",...(window.APP_CONFIG||{})};
+const __MPB_STORAGE=(()=>{
+  try{
+    const k="__mpb_storage_test__";
+    window.localStorage.setItem(k,"1");
+    window.localStorage.removeItem(k);
+    return window.localStorage;
+  }catch(e){
+    console.warn("LocalStorage tidak tersedia, memakai memory storage sementara.", e);
+    const m={};
+    return {getItem:k=>Object.prototype.hasOwnProperty.call(m,k)?m[k]:null,setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}};
+  }
+})();
+const CONFIG={appName:"Monitoring Pengadaan Barang",shortName:"MPB",organizationName:"Divre",logoUrl:"assets/logo.svg",faviconUrl:"assets/favicon.svg",primaryColor:"#2563eb",secondaryColor:"#0f766e",accentColor:"#f59e0b",...(window.APP_CONFIG||{})};
 document.title=CONFIG.appName;document.documentElement.style.setProperty("--primary",CONFIG.primaryColor);document.documentElement.style.setProperty("--secondary",CONFIG.secondaryColor);document.documentElement.style.setProperty("--accent",CONFIG.accentColor);document.getElementById("favicon").href=CONFIG.faviconUrl;
-const DB_KEY="mpb_modern_db_v18_username",SESSION_KEY="mpb_modern_session_v18_username";
-const ROLES=["Admin","Bidang Terkait","PBJ","Kbukan adivre","Legal","Wakadivre","Kadep Suike","Vendor","KSS Sarpra KPH","TPHP","PPHP","Kasi Sarpra","Kasi Angja","Korektor Pajak","Korektor Angja","KSS Angja","Umum"];
+const DB_KEY="mpb_modern_db_v27_operational",SESSION_KEY="mpb_modern_session_v27_operational";
+const ROLES=["Admin","Bidang Terkait","PBJ","Kadivre","Legal","Wakadivre","Kadep Suike","Vendor","KSS Sarpra KPH","TPHP","PPHP","Kasi Sarpra","Kasi Angja","Korektor Pajak","Korektor Angja","KSS Angja","Umum"];
 const MODULES=["Dashboard","Data Pengadaan","Input Pengadaan","Approval","Masa Pelaksanaan","Alokasi KPH","Pengiriman Barang","Penerimaan Barang","Monitoring Barang","Role & Permission","User Management","Branding"];
 const ACTIONS=["lihat","tambah","edit","hapus"];
 const s=(title,pic,days,detail)=>({title,pic,days,detail});
@@ -12,12 +24,12 @@ const WORKFLOW=[
 {phase:"Pengiriman & Pemeriksaan",items:[s("Kegiatan Pengisian Alokasi Barang Per KPH","PBJ",2,"Form alokasi wajib diisi sebelum approval."),s("Vendor Melaksanakan Pengiriman Barang","PBJ",null,"Input form pengiriman barang dan upload DP pengiriman."),s("KPH Menerima Barang","KSS Sarpra KPH",null,"Penerimaan baru aktif setelah pengiriman tersimpan."),s("Monitoring Penerimaan Barang","Bidang Terkait",null,"Pantau total terkirim dan diterima."),s("Pemeriksaan TPHP KPH","TPHP",1,"Aktif setelah barang diterima 100%."),s("TPHP KPH membuat BA Pemeriksaan Barang","KSS Sarpra KPH",3,"Upload BA pemeriksaan dan dokumen lain."),s("Pengiriman BA Pemeriksaan & Kelengkapan ke Kantor Divre","KSS Sarpra KPH",7,"Pengiriman dokumen asli."),s("Surat Permohonan Pemeriksaan dari Vendor","Umum",2,"Setelah informasi barang diterima 100%."),s("Disposisi Kadivre Permohonan Pemeriksaan","Kadivre",2,"Disposisi permohonan pemeriksaan."),s("ND Permohonan Pemeriksaan Pengadaan","Bidang Terkait",2,"ND permohonan pemeriksaan pengadaan."),s("Disposisi Kadivre Pemeriksaan Pengadaan","Kadivre",2,"Disposisi pemeriksaan pengadaan."),s("BA Pemeriksaan PPHP","PPHP",2,"BA pemeriksaan PPHP.")]},
 {phase:"Pembayaran & Selesai",items:[s("Surat Permohonan Pembayaran dari Vendor","Kasi Sarpra",2,"Surat permohonan pembayaran dari vendor."),s("Menerima BA Pemeriksaan dan Kelengkapan dari TPHP","KSS Sarpra KPH",2,"Menerima BA pemeriksaan dan kelengkapan dari TPHP."),s("TTD Vendor","Kasi Sarpra",2,"TTD BA Pemeriksaan PPHP & kelengkapan DP."),s("TTD Sekretaris PPHP","Kasi Sarpra",2,"TTD Sekretaris PPHP."),s("TTD Ketua PPHP","Bidang Terkait",2,"TTD Ketua PPHP."),s("TTD Anggota PPHP","Kasi Angja",2,"TTD Anggota PPHP."),s("TTD Kadep User","Bidang Terkait",2,"TTD Kadep User."),s("TTD Wakadivre","Wakadivre",2,"TTD Wakadivre."),s("TTD BA Serah Terima","Kadivre",2,"TTD BA Serah Terima."),s("Invoice, kwitansi, Faktur Pajak, dan berkas lainnya","Kasi Sarpra",2,"Upload invoice, kwitansi, faktur pajak, dan berkas lain."),s("Koreksi Korektor Pajak","Korektor Pajak",2,"Koreksi pajak."),s("Koreksi berkas oleh korektor Angja","Korektor Angja",5,"Koreksi berkas oleh korektor Angja."),s("Koreksi berkas oleh Kasi Angja","Kasi Angja",2,"Koreksi berkas oleh Kasi Angja."),s("Koreksi berkas oleh Kadep SUIKE","Kadep SUIKE",2,"Koreksi berkas oleh Kadep SUIKE."),s("Paraf Wakadivre","Wakadivre",2,"Paraf Wakadivre."),s("TTD Kadivre","Kadivre",2,"TTD Kadivre."),s("Scan Berkas dan upload Dokumen","KSS Angja",1,"Scan berkas dan upload dokumen."),s("Menunggu Pembayaran dari Kanpus","Kadivre",null,"Flexible. Durasi tetap dihitung tanpa batas terlambat.")]}];
 const STEPS=WORKFLOW.flatMap((p,pi)=>p.items.map((it,ii)=>({...it,id:WORKFLOW.slice(0,pi).reduce((a,b)=>a+b.items.length,0)+ii,phase:p.phase,phaseIndex:pi,itemIndex:ii})));const IDX={SPMK:STEPS.findIndex(x=>x.title==="SPMK"),MASA:STEPS.findIndex(x=>x.title==="Masa Pelaksanaan Pekerjaan"),ALOKASI:STEPS.findIndex(x=>x.title==="Kegiatan Pengisian Alokasi Barang Per KPH"),KIRIM:STEPS.findIndex(x=>x.title==="Vendor Melaksanakan Pengiriman Barang"),TERIMA:STEPS.findIndex(x=>x.title==="KPH Menerima Barang"),TPHP:STEPS.findIndex(x=>x.title==="Pemeriksaan TPHP KPH")};
-let db=loadDb(),session=JSON.parse(localStorage.getItem(SESSION_KEY)||"null"),state={page:"dashboard",filter:"all",details:true};
+let db=loadDb(),session=JSON.parse(__MPB_STORAGE.getItem(SESSION_KEY)||"null"),state={page:"dashboard",filter:"all",details:true};
 function u(id,name,email,password,role,bidang){return{id,name,email,password,role,bidang,active:true}}function p(id,nama,bidang,jenisPengadaan,jenisBarang,satuan,totalUsulan,catatan,currentStep,createdAt){return{id,nama,bidang,jenisPengadaan,jenisBarang,satuan,totalUsulan:+totalUsulan,catatan:catatan||"",vendor:"",createdAt:createdAt||today(),currentStep,completedSteps:Array.from({length:currentStep},(_,i)=>i),approvals:[],allocations:[],shipments:[],receipts:[],contract:{noPks:"",tanggalPks:"",tanggalPerjanjian:"",tanggalMulai:"",tanggalAkhir:""}}}function alloc(vendor,noPks,tanggalPks,termin,tanggalMulai,tanggalAkhir,satuanKerja,jenisBarang,satuan,tarif,volume,tahunPks){return{vendor,noPks,tanggalPks,termin,tanggalMulai,tanggalAkhir,satuanKerja,jenisBarang,satuan,tarif:+tarif,volume:+volume,tahunPks:+tahunPks,nilai:+tarif*+volume}}function mov(tanggal,noPks,termin,satuanKerja,jenisBarang,satuan,tarif,volume,tahunPks,dp){return{tanggal,noPks,termin,satuanKerja,jenisBarang,satuan,tarif:+tarif,volume:+volume,tahunPks:+tahunPks,nilai:+tarif*+volume,dp:dp||""}}
 function initialDb(){const permissions={};ROLES.forEach(r=>{permissions[r]={};MODULES.forEach(m=>permissions[r][m]={lihat:false,tambah:false,edit:false,hapus:false})});MODULES.forEach(m=>permissions.Admin[m]={lihat:true,tambah:true,edit:true,hapus:true});function set(role,mods,perm){mods.forEach(m=>permissions[role][m]={...permissions[role][m],...perm})}set("Bidang Terkait",["Dashboard","Data Pengadaan","Input Pengadaan","Approval","Monitoring Barang"],{lihat:true,edit:true});permissions["Bidang Terkait"]["Input Pengadaan"]={lihat:true,tambah:true,edit:true,hapus:false};set("PBJ",["Dashboard","Data Pengadaan","Approval","Masa Pelaksanaan","Alokasi KPH","Pengiriman Barang","Monitoring Barang"],{lihat:true,tambah:true,edit:true});["Kadivre","Legal","Wakadivre","Kadep Suike","Vendor","KSS Sarpra KPH","TPHP","PPHP","Kasi Sarpra","Kasi Angja","Korektor Pajak","Korektor Angja","KSS Angja","Umum"].forEach(r=>set(r,["Dashboard","Data Pengadaan","Approval","Monitoring Barang"],{lihat:true,edit:true}));permissions.Vendor["Pengiriman Barang"]={lihat:true,tambah:true,edit:true,hapus:false};permissions["KSS Sarpra KPH"]["Penerimaan Barang"]={lihat:true,tambah:true,edit:true,hapus:false};const users=[u(1,"Administrator","admin@pengadaan.local","admin123","Admin","Administrasi"),u(2,"Bidang Teknis IT","it@pengadaan.local","it123","Bidang Terkait","IT"),u(3,"Bidang Umum","umum.bidang@pengadaan.local","umum123","Bidang Terkait","Umum"),u(4,"Petugas PBJ","pbj@pengadaan.local","pbj123","PBJ","PBJ"),u(5,"Kadivre","kadivre@pengadaan.local","kadivre123","Kadivre","Direksi"),u(6,"Legal","legal@pengadaan.local","legal123","Legal","Legal"),u(7,"Vendor Demo","vendor@pengadaan.local","vendor123","Vendor","Vendor"),u(8,"KSS Sarpra KPH","kph@pengadaan.local","kph123","KSS Sarpra KPH","KPH Bandung")];let a=p(1,"Laptop Operasional Divre","IT","Pengadaan Langsung","Laptop","Unit",120,"Kebutuhan laptop operasional Divre dan KPH.",32,"2026-06-01");a.vendor="PT Teknologi Nusantara";a.contract={noPks:"PKS/001/2026",tanggalPks:"2026-06-01",tanggalPerjanjian:"2026-06-02",tanggalMulai:"2026-06-02",tanggalAkhir:"2026-07-10"};a.allocations=[alloc("PT Teknologi Nusantara","PKS/001/2026","2026-06-01","Termin I","2026-06-02","2026-06-20","KPH Bandung","Laptop","Unit",8500000,60,2026),alloc("PT Teknologi Nusantara","PKS/001/2026","2026-06-01","Termin II","2026-06-21","2026-07-10","KPH Bogor","Laptop","Unit",8500000,60,2026)];a.shipments=[mov("2026-06-10","PKS/001/2026","Termin I","KPH Bandung","Laptop","Unit",8500000,50,2026,"dp-kirim-001.pdf")];a.receipts=[mov("2026-06-11","PKS/001/2026","Termin I","KPH Bandung","Laptop","Unit",8500000,42,2026,"dp-terima-001.pdf")];let b=p(2,"APAR untuk KPH","Umum","Tender Cepat","APAR","Unit",80,"Kebutuhan alat pemadam api ringan.",8,"2026-06-12");return{permissions,users,procurements:[a,b],nextUserId:9,nextProcId:3}}
-function loadDb(){try{const raw=localStorage.getItem(DB_KEY);if(raw)return JSON.parse(raw)}catch(e){}const x=initialDb();localStorage.setItem(DB_KEY,JSON.stringify(x));return x}function save(){localStorage.setItem(DB_KEY,JSON.stringify(db))}function reset(){db=initialDb();save();toast("Data demo berhasil direset.");render()}function cur(){return db.users.find(x=>x.id===session?.id)}function can(m,a="lihat"){return session&&(session.role==="Admin"||!!db.permissions?.[session.role]?.[m]?.[a])}function admin(){return session?.role==="Admin"}function bidang(){return session?.role==="Bidang Terkait"}function accessProc(x){return admin()||!bidang()||cur()?.bidang===x.bidang}function canInput(){return admin()||bidang()&&can("Input Pengadaan","tambah")}function canEditProc(x){return admin()||bidang()&&cur()?.bidang===x.bidang&&can("Input Pengadaan","edit")}function spmk(x){return x.completedSteps.includes(IDX.SPMK)}function shipTotal(x){return x.shipments.reduce((a,b)=>a+(+b.volume||0),0)}function recTotal(x){return x.receipts.reduce((a,b)=>a+(+b.volume||0),0)}function pct(v,t){return t?Math.min(100,Math.round(+v/+t*100)):0}function today(){return new Date().toISOString().slice(0,10)}function d(v){return v?new Date(v).toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"}):"-"}function rp(v){return"Rp "+Number(v||0).toLocaleString("id-ID")}function esc(x){return String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}function fd(form){return Object.fromEntries(new FormData(form).entries())}function days(a,b){return Math.floor((new Date(b)-new Date(a))/(864e5))}function before(id){let n=0;for(let i=0;i<id;i++)n+=STEPS[i].days||0;return n}function due(x,id=x.currentStep){const st=STEPS[id];if(!st)return{text:"Selesai",color:"green"};const e=Math.max(0,days(x.createdAt,today())),start=before(id);if(st.days===null)return{text:`Flexible • ${Math.max(0,e-start)} hari berjalan`,color:"blue"};const r=start+st.days-e;if(r<0)return{text:`Lewat ${Math.abs(r)} hari`,color:"red"};if(r<=1)return{text:`Sisa ${r} hari`,color:"yellow"};return{text:`Sisa ${r} hari`,color:"green"}}function isPic(st){return admin()||session?.role===st?.pic}function status(x){if(x.currentStep>=STEPS.length)return{text:"Selesai",color:"green"};let dd=due(x);if(dd.color==="red")return{text:"Terlambat",color:"red"};if(isPic(STEPS[x.currentStep]))return{text:"Perlu Approval",color:"yellow"};return{text:"Berlangsung",color:"blue"}}function prog(x){return pct(x.completedSteps.length,STEPS.length)}function vis(){return db.procurements.filter(accessProc)}function filtered(){let r=vis();if(state.filter==="done")return r.filter(x=>x.currentStep>=STEPS.length);if(state.filter==="running")return r.filter(x=>x.currentStep<STEPS.length);if(state.filter==="need")return r.filter(x=>isPic(STEPS[x.currentStep]));if(state.filter==="my")return r.filter(x=>x.bidang===cur()?.bidang);return r}
-function render(){const app=document.getElementById("app");if(!session||!cur()){app.innerHTML=login();bindLogin();return}app.innerHTML=shell();bindShell();page()}function login(){return`<section class="login"><div class="loginHero"><div class="loginBrand"><img src="${esc(CONFIG.logoUrl)}"><div><b>${esc(CONFIG.appName)}</b><span>${esc(CONFIG.organizationName)}</span></div></div><h1>Monitoring pengadaan barang yang rapi, dan terkontrol.</h1><p>Approval berjalan sesuai PIC, pengadaan hanya diisi bidang terkait, vendor baru dapat diinput setelah SPMK, serta progress pengiriman-penerimaan termonitor otomatis.</p><div class="badges"><span>Role-based Access</span><span>Approval by PIC</span><span>Vendor after SPMK</span><span>Modern Dashboard</span></div></div><div class="loginPanel"><div class="loginCard"><h2>Masuk Aplikasi</h2><p>Gunakan akun demo sesuai role untuk menguji akses.</p><form id="loginForm"><div class="field"><label>Username</label><input name="username" value="admin" autocomplete="username" required></div><div class="field" style="margin-top:12px"><label>Password</label><input type="password" name="password" value="admin123" required></div><button class="btn primary" style="width:100%;margin-top:18px">Login</button></form><div class="demo"><b>Akun demo:</b><br>Admin: admin / demo123<br>Bidang IT: bidang_it / demo123<br>Bidang Umum: bidang_umum / demo123<br>PBJ: pbj / demo123<br>Kadivre: kadivre / demo123<br>KPH: kss_kph / demo123</div></div></div></section>`}function bindLogin(){document.getElementById("loginForm").onsubmit=e=>{e.preventDefault();let x=fd(e.target),u=db.users.find(v=>v.active&&(v.username||"").toLowerCase()===(x.username||"").toLowerCase()&&v.password===x.password);if(!u)return toast("Username atau password tidak sesuai.");session={id:u.id,name:u.name,role:u.role};localStorage.setItem(SESSION_KEY,JSON.stringify(session));state.page="dashboard";render()}}
-function nav(page,label,module,ico){return{page,label,module,ico}}function shell(){const u=cur(),groups=[["Utama",[nav("dashboard","Dashboard","Dashboard","⌂"),nav("procurements","Data Pengadaan","Data Pengadaan","▦"),nav("input","Input Pengadaan","Input Pengadaan","＋"),nav("approval","Approval","Approval","✓")]],["Operasional",[nav("masa","Masa Pelaksanaan","Masa Pelaksanaan","◷"),nav("allocation","Alokasi KPH","Alokasi KPH","↦"),nav("shipping","Pengiriman","Pengiriman Barang","⇢"),nav("receiving","Penerimaan","Penerimaan Barang","⇠"),nav("monitoring","Monitoring Barang","Monitoring Barang","◉")]],["Admin",[nav("roles","Role & Permission","Role & Permission","⚙"),nav("users","User Management","User Management","☷"),nav("branding","Branding","Branding","✦")]]];return`<div class="shell"><aside class="sidebar"><div class="brand"><img src="${esc(CONFIG.logoUrl)}"><div><b>${esc(CONFIG.shortName)}</b><span>${esc(CONFIG.appName)}</span></div></div>${groups.map(([t,items])=>{let v=items.filter(i=>can(i.module));return v.length?`<div><div class="navTitle">${t}</div>${v.map(i=>`<button class="navBtn ${state.page===i.page?'active':''}" data-nav="${i.page}"><span class="ico">${i.ico}</span><span>${i.label}</span></button>`).join("")}</div>`:""}).join("")}<div class="sideUser"><b>${esc(u.name)}</b><span>${esc(u.role)} • ${esc(u.bidang)}</span></div></aside><main class="main"><div class="topbar"><div><div class="kicker">${esc(CONFIG.organizationName)} Procurement System</div><h1>${title()}</h1></div><div class="userChip"><div class="avatar">${esc(u.name[0])}</div><div><b>${esc(u.name)}</b><span>${esc(u.role)}</span></div><button id="logout" class="btn ghost small">Logout</button></div></div><div id="content"></div><div id="modalRoot"></div></main></div>`}function bindShell(){document.querySelectorAll("[data-nav]").forEach(b=>b.onclick=()=>{state.page=b.dataset.nav;render()});document.getElementById("logout").onclick=()=>{localStorage.removeItem(SESSION_KEY);session=null;render()}}function title(){return{dashboard:"Dashboard Pengadaan",procurements:"Data Pengadaan",input:"Input Data Pengadaan",approval:"Approval Sesuai PIC",masa:"Masa Pelaksanaan Pekerjaan",allocation:"Alokasi Barang Per KPH",shipping:"Pengiriman Barang",receiving:"Penerimaan Barang",monitoring:"Monitoring Barang",roles:"Role & Permission",users:"User Management",branding:"Branding Aplikasi"}[state.page]||"Aplikasi"}
+function loadDb(){try{const raw=__MPB_STORAGE.getItem(DB_KEY);if(raw)return JSON.parse(raw)}catch(e){}const x=initialDb();__MPB_STORAGE.setItem(DB_KEY,JSON.stringify(x));return x}function save(){__MPB_STORAGE.setItem(DB_KEY,JSON.stringify(db))}function reset(){db=initialDb();save();toast("Data demo berhasil direset.");render()}function cur(){return db.users.find(x=>x.id===session?.id)}function can(m,a="lihat"){return session&&(session.role==="Admin"||!!db.permissions?.[session.role]?.[m]?.[a])}function admin(){return session?.role==="Admin"}function bidang(){return session?.role==="Bidang Terkait"}function accessProc(x){return admin()||!bidang()||cur()?.bidang===x.bidang}function canInput(){return admin()||bidang()&&can("Input Pengadaan","tambah")}function canEditProc(x){return admin()||bidang()&&cur()?.bidang===x.bidang&&can("Input Pengadaan","edit")}function spmk(x){return x.completedSteps.includes(IDX.SPMK)}function shipTotal(x){return x.shipments.reduce((a,b)=>a+(+b.volume||0),0)}function recTotal(x){return x.receipts.reduce((a,b)=>a+(+b.volume||0),0)}function pct(v,t){return t?Math.min(100,Math.round(+v/+t*100)):0}function today(){return new Date().toISOString().slice(0,10)}function d(v){return v?new Date(v).toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"}):"-"}function rp(v){return"Rp "+Number(v||0).toLocaleString("id-ID")}function esc(x){return String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}function fd(form){return Object.fromEntries(new FormData(form).entries())}function days(a,b){return Math.floor((new Date(b)-new Date(a))/(864e5))}function before(id){let n=0;for(let i=0;i<id;i++)n+=STEPS[i].days||0;return n}function due(x,id=x.currentStep){const st=STEPS[id];if(!st)return{text:"Selesai",color:"green"};const e=Math.max(0,days(x.createdAt,today())),start=before(id);if(st.days===null)return{text:`Flexible • ${Math.max(0,e-start)} hari berjalan`,color:"blue"};const r=start+st.days-e;if(r<0)return{text:`Lewat ${Math.abs(r)} hari`,color:"red"};if(r<=1)return{text:`Sisa ${r} hari`,color:"yellow"};return{text:`Sisa ${r} hari`,color:"green"}}function isPic(st){return admin()||session?.role===st?.pic}function status(x){if(x.currentStep>=STEPS.length)return{text:"Selesai",color:"green"};let dd=due(x);if(dd.color==="red")return{text:"Terlambat",color:"red"};if(isPic(STEPS[x.currentStep]))return{text:"Perlu Approval",color:"yellow"};return{text:"Berlangsung",color:"blue"}}function prog(x){return pct(x.completedSteps.length,STEPS.length)}function vis(){return db.procurements.filter(accessProc)}function filtered(){let r=vis();if(state.filter==="done")return r.filter(x=>x.currentStep>=STEPS.length);if(state.filter==="running")return r.filter(x=>x.currentStep<STEPS.length);if(state.filter==="need")return r.filter(x=>isPic(STEPS[x.currentStep]));if(state.filter==="my")return r.filter(x=>x.bidang===cur()?.bidang);return r}
+function render(){const app=document.getElementById("app");if(!session||!cur()){app.innerHTML=login();bindLogin();return}app.innerHTML=shell();bindShell();page()}function login(){return`<section class="login"><div class="loginHero"><div class="loginBrand"><img src="${esc(CONFIG.logoUrl)}"><div><b>${esc(CONFIG.appName)}</b><span>${esc(CONFIG.organizationName)}</span></div></div><h1>Monitoring pengadaan barang yang rapi, terkontrol, dan berbasis PIC.</h1><p>Approval berjalan sesuai PIC, pengadaan hanya diisi bidang terkait, vendor baru dapat diinput setelah SPMK, serta progress pengiriman-penerimaan termonitor otomatis.</p><div class="badges"><span>Role-based Access</span><span>Approval by PIC</span><span>Vendor after SPMK</span><span>Modern Dashboard</span></div></div><div class="loginPanel"><div class="loginCard"><h2>Masuk Aplikasi</h2><p>Gunakan akun demo sesuai role untuk menguji akses.</p><form id="loginForm"><div class="field"><label>Email</label><input name="email" value="admin@pengadaan.local" required></div><div class="field" style="margin-top:12px"><label>Password</label><input type="password" name="password" value="admin123" required></div><button class="btn primary" style="width:100%;margin-top:18px">Login</button></form><div class="demo"><b>Akun demo:</b><br>Admin: admin@pengadaan.local / admin123<br>Bidang IT: it@pengadaan.local / it123<br>Bidang Umum: umum.bidang@pengadaan.local / umum123<br>PBJ: pbj@pengadaan.local / pbj123<br>Kadivre: kadivre@pengadaan.local / kadivre123<br>Vendor: vendor@pengadaan.local / vendor123<br>KPH: kph@pengadaan.local / kph123</div></div></div></section>`}function bindLogin(){document.getElementById("loginForm").onsubmit=e=>{e.preventDefault();let x=fd(e.target),u=db.users.find(v=>v.active&&v.email===x.email&&v.password===x.password);if(!u)return toast("Email atau password tidak sesuai.");session={id:u.id,name:u.name,role:u.role};__MPB_STORAGE.setItem(SESSION_KEY,JSON.stringify(session));state.page="dashboard";render()}}
+function nav(page,label,module,ico){return{page,label,module,ico}}function shell(){const u=cur(),groups=[["Utama",[nav("dashboard","Dashboard","Dashboard","⌂"),nav("procurements","Data Pengadaan","Data Pengadaan","▦"),nav("input","Input Pengadaan","Input Pengadaan","＋"),nav("approval","Approval","Approval","✓")]],["Operasional",[nav("masa","Masa Pelaksanaan","Masa Pelaksanaan","◷"),nav("allocation","Alokasi KPH","Alokasi KPH","↦"),nav("shipping","Pengiriman","Pengiriman Barang","⇢"),nav("receiving","Penerimaan","Penerimaan Barang","⇠"),nav("monitoring","Monitoring Barang","Monitoring Barang","◉")]],["Admin",[nav("roles","Role & Permission","Role & Permission","⚙"),nav("users","User Management","User Management","☷"),nav("branding","Branding","Branding","✦")]]];return`<div class="shell"><aside class="sidebar"><div class="brand"><img src="${esc(CONFIG.logoUrl)}"><div><b>${esc(CONFIG.shortName)}</b><span>${esc(CONFIG.appName)}</span></div></div>${groups.map(([t,items])=>{let v=items.filter(i=>can(i.module));return v.length?`<div><div class="navTitle">${t}</div>${v.map(i=>`<button class="navBtn ${state.page===i.page?'active':''}" data-nav="${i.page}"><span class="ico">${i.ico}</span><span>${i.label}</span></button>`).join("")}</div>`:""}).join("")}<div class="sideUser"><b>${esc(u.name)}</b><span>${esc(u.role)} • ${esc(u.bidang)}</span></div></aside><main class="main"><div class="topbar"><div><div class="kicker">${esc(CONFIG.organizationName)} Procurement System</div><h1>${title()}</h1></div><div class="userChip"><div class="avatar">${esc(u.name[0])}</div><div><b>${esc(u.name)}</b><span>${esc(u.role)}</span></div><button id="logout" class="btn ghost small">Logout</button></div></div><div id="content"></div><div id="modalRoot"></div></main></div>`}function bindShell(){document.querySelectorAll("[data-nav]").forEach(b=>b.onclick=()=>{state.page=b.dataset.nav;render()});document.getElementById("logout").onclick=()=>{__MPB_STORAGE.removeItem(SESSION_KEY);session=null;render()}}function title(){return{dashboard:"Dashboard Pengadaan",procurements:"Data Pengadaan",input:"Input Data Pengadaan",approval:"Approval Sesuai PIC",masa:"Masa Pelaksanaan Pekerjaan",allocation:"Alokasi Barang Per KPH",shipping:"Pengiriman Barang",receiving:"Penerimaan Barang",monitoring:"Monitoring Barang",roles:"Role & Permission",users:"User Management",branding:"Branding Aplikasi"}[state.page]||"Aplikasi"}
 function page(){const c=document.getElementById("content"),map={dashboard,procurements,input,approval,masa,allocation,shipping,receiving,monitoring,roles,users,branding};c.innerHTML=(map[state.page]||dashboard)();bindPage()}
 function stat(f,t,v,n){return`<div class="card stat" data-filter="${f}"><div class="statTitle">${t}</div><div class="statVal">${v}</div><div class="note">${n}</div></div>`}function summary(){let r=vis(),us=r.reduce((a,x)=>a+x.totalUsulan,0),sh=r.reduce((a,x)=>a+shipTotal(x),0),re=r.reduce((a,x)=>a+recTotal(x),0);return`<div class="kpiRow"><div class="mini"><span>Total Usulan</span><b>${us}</b></div><div class="mini"><span>Total Terkirim</span><b>${sh}</b><small>${pct(sh,us)}%</small></div><div class="mini"><span>Total Diterima</span><b>${re}</b><small>${pct(re,us)}%</small></div></div>`}function dashboard(){let r=vis(),done=r.filter(x=>x.currentStep>=STEPS.length).length,run=r.filter(x=>x.currentStep<STEPS.length).length,need=r.filter(x=>isPic(STEPS[x.currentStep])).length,bc={};r.forEach(x=>bc[x.bidang]=(bc[x.bidang]||0)+1);return`<div class="grid cards">${stat("all","Total Pengadaan",r.length,"Seluruh pengadaan yang dapat Anda akses")}${stat("done","Selesai",done,"Pengadaan selesai")}${stat("running","Sedang Berlangsung",run,"Klik untuk melihat proses berjalan")}${stat("need","Perlu Approval",need,"Tahapan sesuai PIC login")}</div><div class="split"><div class="card pad"><div class="head" style="margin-top:0"><h2>Pengadaan per Bidang</h2></div>${Object.entries(bc).map(([b,n])=>`<div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:11px 0"><div><b>${esc(b)}</b><br><small>${n} pengadaan</small></div><span class="badge blue">${n}</span></div>`).join("")||`<div class="empty">Belum ada data.</div>`}</div><div class="card pad"><div class="head" style="margin-top:0"><h2>Monitoring Barang</h2></div>${summary()}<div class="help ok" style="margin-top:14px">Persentase diterima bertambah setelah form penerimaan diinput oleh KSS Sarpra KPH.</div></div></div><div class="head"><h2>Daftar Pengadaan</h2><div class="tools">${canInput()?`<button class="btn primary small" data-go="input">+ Input Pengadaan</button>`:""}<button class="btn ghost small" data-reset>Reset Data Demo</button></div></div>${procTable(filtered())}`}
 function procTable(rows){if(!rows.length)return`<div class="card empty">Belum ada data pengadaan.</div>`;return`<div class="tableWrap"><table><thead><tr><th>Pengadaan</th><th>Bidang</th><th>Jenis</th><th>Vendor</th><th>Progress</th><th>Posisi Terakhir</th><th>Tata Waktu</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${rows.map(x=>{let st=STEPS[x.currentStep],ps=status(x),du=due(x),vendor=spmk(x)?(x.vendor||`<span class="badge yellow">Belum diisi</span>`):`<span class="badge gray">Terkunci sampai SPMK</span>`;return`<tr><td><b>${esc(x.nama)}</b><br><small>Total usulan: ${x.totalUsulan} ${esc(x.satuan)}</small></td><td>${esc(x.bidang)}</td><td>${esc(x.jenisPengadaan)}</td><td>${vendor}</td><td><div class="progress"><span style="width:${prog(x)}%"></span></div><small>${prog(x)}%</small></td><td>${st?`<b>${esc(st.title)}</b><br><small>PIC: ${esc(st.pic)}</small>`:"<b>Selesai</b>"}</td><td><span class="badge ${du.color}">${esc(du.text)}</span></td><td><span class="badge ${ps.color}">${esc(ps.text)}</span></td><td><div class="tools"><button class="btn ghost small" data-detail="${x.id}">Detail</button>${canEditProc(x)?`<button class="btn ghost small" data-edit="${x.id}">Edit</button>`:""}</div></td></tr>`}).join("")}</tbody></table></div>`}
@@ -35,11 +47,11 @@ function receiving(){let rows=vis().filter(x=>spmk(x)&&x.shipments.length);retur
 function movTable(type){let list=[];vis().forEach(x=>x[type].forEach(a=>list.push({proc:x,...a})));if(!list.length)return`<div class="card empty">Belum ada data.</div>`;return`<div class="tableWrap"><table><thead><tr><th>Pengadaan</th><th>Tanggal</th><th>No PKS</th><th>Termin</th><th>Satuan Kerja</th><th>Barang</th><th>Tarif</th><th>Volume</th><th>Nilai</th><th>DP</th></tr></thead><tbody>${list.map(x=>`<tr><td><b>${esc(x.proc.nama)}</b></td><td>${d(x.tanggal)}</td><td>${esc(x.noPks)}</td><td>${esc(x.termin)}</td><td>${esc(x.satuanKerja)}</td><td>${esc(x.jenisBarang)}</td><td>${rp(x.tarif)}</td><td>${x.volume}</td><td>${rp(x.nilai)}</td><td>${esc(x.dp||"-")}</td></tr>`).join("")}</tbody></table></div>`}
 function monitoring(){let rows=vis();return`<div class="grid cards">${stat("all","Total Pengadaan",rows.length,"Jumlah pengadaan")}${stat("all","Total Usulan",rows.reduce((a,x)=>a+x.totalUsulan,0),"Volume barang usulan")}${stat("all","Total Terkirim",rows.reduce((a,x)=>a+shipTotal(x),0),"Akumulasi volume kirim")}${stat("all","Total Diterima",rows.reduce((a,x)=>a+recTotal(x),0),"Akumulasi volume terima")}</div><div class="head"><h2>Monitoring Barang Sesuai Usulan</h2></div><div class="tableWrap"><table><thead><tr><th>Pengadaan</th><th>Bidang</th><th>Total Usulan</th><th>Total Terkirim</th><th>Total Diterima</th><th>% Terkirim</th><th>% Diterima</th><th>Catatan</th></tr></thead><tbody>${rows.map(x=>{let sh=shipTotal(x),re=recTotal(x);return`<tr><td><b>${esc(x.nama)}</b><br><small>${esc(x.jenisBarang)}</small></td><td>${esc(x.bidang)}</td><td>${x.totalUsulan} ${esc(x.satuan)}</td><td>${sh}</td><td>${re}</td><td><div class="progress"><span style="width:${pct(sh,x.totalUsulan)}%"></span></div><small>${pct(sh,x.totalUsulan)}%</small></td><td><div class="progress"><span style="width:${pct(re,x.totalUsulan)}%"></span></div><small>${pct(re,x.totalUsulan)}%</small></td><td>${re>=x.totalUsulan?`<span class="badge green">Diterima 100%</span>`:`<span class="badge yellow">Belum 100%</span>`}</td></tr>`}).join("")}</tbody></table></div>`}
 function roles(){if(!can("Role & Permission"))return denied("Anda tidak memiliki akses Role & Permission.");return`<div class="head" style="margin-top:0"><h2>Role & Permission</h2>${can("Role & Permission","edit")?`<button class="btn primary small" id="savePerm">Simpan Permission</button>`:""}</div><div class="help">Admin dapat mengatur permission per modul: LIHAT, TAMBAH, EDIT, HAPUS.</div><br><div class="tableWrap"><div class="permGrid"><div class="phead">Role</div><div class="phead">Modul</div><div class="phead">Lihat</div><div class="phead">Tambah</div><div class="phead">Edit</div><div class="phead">Hapus</div>${ROLES.map(r=>MODULES.map(m=>`<div><b>${esc(r)}</b></div><div>${esc(m)}</div>${ACTIONS.map(a=>`<div><input type="checkbox" data-perm="${esc(r)}|${esc(m)}|${a}" ${db.permissions?.[r]?.[m]?.[a]?"checked":""} ${can("Role & Permission","edit")?"":"disabled"}></div>`).join("")}`).join("")).join("")}</div></div>`}
-function users(){if(!can("User Management"))return denied("Anda tidak memiliki akses User Management.");return`<div class="split"><div class="card pad"><h2 style="margin-top:0">Tambah User</h2>${can("User Management","tambah")?`<form id="userForm"><div class="formGrid" style="grid-template-columns:1fr"><div class="field"><label>Nama</label><input name="name" required></div><div class="field"><label>Username</label><input name="username" autocomplete="username" required></div><div class="field"><label>Password</label><input name="password" required></div><div class="field"><label>Role</label><select name="role">${ROLES.map(r=>`<option>${esc(r)}</option>`).join("")}</select></div><div class="field"><label>Bidang</label><input name="bidang" required></div><button class="btn primary">Tambah User</button></div></form>`:`<div class="help warn">Role Anda tidak dapat menambah user.</div>`}</div><div class="tableWrap"><table><thead><tr><th>Nama</th><th>Username</th><th>Role</th><th>Bidang</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${db.users.map(x=>`<tr><td><b>${esc(x.name)}</b></td><td>${esc(x.username||"-")}</td><td>${esc(x.role)}</td><td>${esc(x.bidang)}</td><td><span class="badge ${x.active?"green":"gray"}">${x.active?"Aktif":"Nonaktif"}</span></td><td>${can("User Management","edit")&&x.role!=="Admin"?`<button class="btn ghost small" data-toggle-user="${x.id}">${x.active?"Nonaktifkan":"Aktifkan"}</button>`:"-"}</td></tr>`).join("")}</tbody></table></div></div>`}
+function users(){if(!can("User Management"))return denied("Anda tidak memiliki akses User Management.");return`<div class="split"><div class="card pad"><h2 style="margin-top:0">Tambah User</h2>${can("User Management","tambah")?`<form id="userForm"><div class="formGrid" style="grid-template-columns:1fr"><div class="field"><label>Nama</label><input name="name" required></div><div class="field"><label>Email</label><input name="email" type="email" required></div><div class="field"><label>Password</label><input name="password" required></div><div class="field"><label>Role</label><select name="role">${ROLES.map(r=>`<option>${esc(r)}</option>`).join("")}</select></div><div class="field"><label>Bidang</label><input name="bidang" required></div><button class="btn primary">Tambah User</button></div></form>`:`<div class="help warn">Role Anda tidak dapat menambah user.</div>`}</div><div class="tableWrap"><table><thead><tr><th>Nama</th><th>Email</th><th>Role</th><th>Bidang</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${db.users.map(x=>`<tr><td><b>${esc(x.name)}</b></td><td>${esc(x.email)}</td><td>${esc(x.role)}</td><td>${esc(x.bidang)}</td><td><span class="badge ${x.active?"green":"gray"}">${x.active?"Aktif":"Nonaktif"}</span></td><td>${can("User Management","edit")&&x.role!=="Admin"?`<button class="btn ghost small" data-toggle-user="${x.id}">${x.active?"Nonaktifkan":"Aktifkan"}</button>`:"-"}</td></tr>`).join("")}</tbody></table></div></div>`}
 function branding(){return`<div class="card pad"><h2 style="margin-top:0">Cara Mengganti Logo, Favicon, dan Nama Web</h2><div class="help ok">Semua pengaturan branding ada di file <b>config.js</b>. Logo dan favicon ada di folder <b>assets</b>.</div><div class="thirds" style="margin-top:16px"><div class="mini"><span>Nama Web</span><b style="font-size:18px">${esc(CONFIG.appName)}</b></div><div class="mini"><span>Logo</span><b style="font-size:18px">${esc(CONFIG.logoUrl)}</b></div><div class="mini"><span>Favicon</span><b style="font-size:18px">${esc(CONFIG.faviconUrl)}</b></div></div><h3>Contoh config.js</h3><pre>window.APP_CONFIG = {
-  appName: "Manajemen dan Pantauan Pengadaan Barang",
-  shortName: "MANTAB",
-  organizationName: "Divre Jatim",
+  appName: "Monitoring Pengadaan Barang",
+  shortName: "MPB",
+  organizationName: "Divre",
   logoUrl: "assets/logo.svg",
   faviconUrl: "assets/favicon.svg",
   primaryColor: "#2563eb",
@@ -51,7 +63,7 @@ function detail(id){let x=db.procurements.find(p=>p.id===id);if(!x)return;let cu
 function workflowProc(x){let n=0;return`<div class="workflow">${WORKFLOW.map(ph=>`<div class="phase"><div class="phaseHead"><b>${esc(ph.phase)}</b><span class="badge gray">${ph.items.length} tahapan</span></div>${ph.items.map(it=>{let id=n++,done=x.completedSteps.includes(id),curr=id===x.currentStep,g=gate(x,id),cls=done?"done":curr?(g.ok?"current":"current blocked"):"",du=due(x,id);return`<div class="stepRow ${cls}"><div class="num">${id+1}</div><div class="stepTitle"><b>${esc(it.title)}</b><span>PIC: ${esc(it.pic)} • Tata waktu: ${it.days===null?"Flexible":it.days+" Hari"}</span>${state.details?`<div class="detail">${esc(it.detail)}${curr&&!g.ok?`<br><b>Belum bisa approve:</b> ${esc(g.msg)}`:""}</div>`:""}</div><div><span class="badge teal">${esc(it.pic)}</span></div><div><span class="badge ${du.color}">${done?"Selesai":curr?du.text:"Menunggu"}</span></div><div>${curr&&isPic(it)?`<button class="btn ${g.ok?"primary":"warning"} small" data-approve="${x.id}" ${g.ok?"":"disabled"}>${g.ok?"Approve":"Lengkapi"}</button>`:curr?`<span class="badge gray">Menunggu PIC</span>`:done?`<span class="badge green">Approved</span>`:`<span class="badge gray">Belum aktif</span>`}</div></div>`}).join("")}</div>`).join("")}</div>`}
 function approve(id){let x=db.procurements.find(p=>p.id===id);if(!x)return;let g=gate(x,x.currentStep);if(!g.ok)return toast(g.msg);x.completedSteps.push(x.currentStep);x.approvals.push({stepId:x.currentStep,stepTitle:STEPS[x.currentStep].title,pic:STEPS[x.currentStep].pic,approvedBy:session.name,approvedRole:session.role,approvedAt:new Date().toISOString()});x.currentStep=Math.min(STEPS.length,x.currentStep+1);save();toast("Approval berhasil disimpan.");detail(x.id)}
 function bindPage(){document.querySelectorAll("[data-filter]").forEach(b=>b.onclick=()=>{state.filter=b.dataset.filter;if(state.page==="dashboard")state.page="procurements";render()});document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{state.page=b.dataset.go;render()});document.querySelectorAll("[data-detail]").forEach(b=>b.onclick=()=>detail(+b.dataset.detail));document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>editProc(+b.dataset.edit));document.querySelectorAll("[data-contract]").forEach(b=>b.onclick=()=>contract(+b.dataset.contract));let r=document.querySelector("[data-reset]");if(r)r.onclick=reset;let t=document.getElementById("toggleDetails");if(t)t.onclick=()=>{state.details=!state.details;render()};let pf=document.getElementById("procForm");if(pf)pf.onsubmit=saveProc;let af=document.getElementById("allocForm");if(af)af.onsubmit=saveAlloc;let sf=document.getElementById("shipForm");if(sf)sf.onsubmit=e=>saveMove(e,"shipments");let rf=document.getElementById("recForm");if(rf)rf.onsubmit=e=>saveMove(e,"receipts");let uf=document.getElementById("userForm");if(uf)uf.onsubmit=saveUser;document.querySelectorAll("[data-toggle-user]").forEach(b=>b.onclick=()=>{let u=db.users.find(x=>x.id===+b.dataset.toggleUser);u.active=!u.active;save();render()});let sp=document.getElementById("savePerm");if(sp)sp.onclick=savePerms}
-function saveProc(e){e.preventDefault();if(!canInput())return toast("Input pengadaan hanya oleh Bidang Terkait atau Admin.");let x=fd(e.target),bd=bidang()?cur().bidang:x.bidang;db.procurements.push(p(db.nextProcId++,x.nama,bd,x.jenisPengadaan,x.jenisBarang,x.satuan,+x.totalUsulan,x.catatan,0,today()));save();toast("Data pengadaan berhasil disimpan.");state.page="procurements";render()}function editProc(id){let x=db.procurements.find(p=>p.id===id);if(!x||!canEditProc(x))return toast("Anda tidak berwenang mengedit data ini.");let j=prompt("Edit jenis pengadaan:",x.jenisPengadaan);if(j!==null)x.jenisPengadaan=j.trim()||x.jenisPengadaan;let total=prompt("Edit total usulan:",x.totalUsulan);if(total!==null&&+total>0)x.totalUsulan=+total;if(spmk(x)){let v=prompt("Isi/Edit vendor setelah SPMK:",x.vendor||"");if(v!==null)x.vendor=v.trim()}else toast("Vendor belum dapat diisi karena SPMK belum selesai.");save();render()}function saveAlloc(e){e.preventDefault();let x=fd(e.target),pr=db.procurements.find(p=>p.id===+x.procId);if(!spmk(pr))return toast("Alokasi hanya setelah SPMK.");let a=alloc(x.vendor,x.noPks,x.tanggalPks,x.termin,x.tanggalMulai,x.tanggalAkhir,x.satuanKerja,x.jenisBarang,x.satuan,+x.tarif,+x.volume,+x.tahunPks);pr.allocations.push(a);pr.vendor=x.vendor;pr.contract.noPks=x.noPks;pr.contract.tanggalPks=x.tanggalPks;pr.contract.tanggalMulai=x.tanggalMulai;pr.contract.tanggalAkhir=x.tanggalAkhir;save();toast("Alokasi tersimpan. Nilai otomatis dihitung.");render()}function saveMove(e,type){e.preventDefault();let x=fd(e.target),pr=db.procurements.find(p=>p.id===+x.procId);if(type==="receipts"&&!pr.shipments.length)return toast("Penerimaan baru bisa diinput setelah pengiriman.");let m=mov(x.tanggal,x.noPks,x.termin,x.satuanKerja,x.jenisBarang,x.satuan,+x.tarif,+x.volume,+x.tahunPks,x.dp);pr[type].push(m);save();toast(type==="shipments"?"Pengiriman tersimpan. Penerimaan sekarang aktif.":"Penerimaan tersimpan. Persentase diterima diperbarui.");render()}function contract(id){let x=db.procurements.find(p=>p.id===id);if(!spmk(x))return toast("Vendor dan kontrak baru dapat diisi setelah SPMK.");let vendor=prompt("Vendor bertanggung jawab:",x.vendor||"");if(vendor===null)return;let no=prompt("No PKS:",x.contract.noPks||"");if(no===null)return;let tp=prompt("Tanggal Perjanjian sesuai kontrak (YYYY-MM-DD):",x.contract.tanggalPerjanjian||today());if(tp===null)return;let tm=prompt("Tanggal Mulai (YYYY-MM-DD):",x.contract.tanggalMulai||today());if(tm===null)return;let ta=prompt("Tanggal Akhir (YYYY-MM-DD):",x.contract.tanggalAkhir||today());if(ta===null)return;x.vendor=vendor.trim();x.contract.noPks=no.trim();x.contract.tanggalPerjanjian=tp.trim();x.contract.tanggalMulai=tm.trim();x.contract.tanggalAkhir=ta.trim();save();toast("Vendor dan kontrak tersimpan.");document.getElementById("modalRoot").innerHTML="";render()}function saveUser(e){e.preventDefault();let x=fd(e.target);if(db.users.some(u=>(u.username||"").toLowerCase()===(x.username||"").toLowerCase()))return toast("Username sudah digunakan.");db.users.push({id:db.nextUserId++,name:x.name,username:String(x.username||"").trim().toLowerCase(),email:"",password:x.password||"demo123",role:x.role,bidang:x.bidang,active:true});save();toast("User berhasil ditambahkan.");render()}function savePerms(){document.querySelectorAll("[data-perm]").forEach(cb=>{let[r,m,a]=cb.dataset.perm.split("|");db.permissions[r][m][a]=cb.checked});save();toast("Permission berhasil disimpan.")}function toast(msg){document.querySelector(".toast")?.remove();let d=document.createElement("div");d.className="toast";d.textContent=msg;document.body.appendChild(d);setTimeout(()=>d.remove(),3200)}
+function saveProc(e){e.preventDefault();if(!canInput())return toast("Input pengadaan hanya oleh Bidang Terkait atau Admin.");let x=fd(e.target),bd=bidang()?cur().bidang:x.bidang;db.procurements.push(p(db.nextProcId++,x.nama,bd,x.jenisPengadaan,x.jenisBarang,x.satuan,+x.totalUsulan,x.catatan,0,today()));save();toast("Data pengadaan berhasil disimpan.");state.page="procurements";render()}function editProc(id){let x=db.procurements.find(p=>p.id===id);if(!x||!canEditProc(x))return toast("Anda tidak berwenang mengedit data ini.");let j=prompt("Edit jenis pengadaan:",x.jenisPengadaan);if(j!==null)x.jenisPengadaan=j.trim()||x.jenisPengadaan;let total=prompt("Edit total usulan:",x.totalUsulan);if(total!==null&&+total>0)x.totalUsulan=+total;if(spmk(x)){let v=prompt("Isi/Edit vendor setelah SPMK:",x.vendor||"");if(v!==null)x.vendor=v.trim()}else toast("Vendor belum dapat diisi karena SPMK belum selesai.");save();render()}function saveAlloc(e){e.preventDefault();let x=fd(e.target),pr=db.procurements.find(p=>p.id===+x.procId);if(!spmk(pr))return toast("Alokasi hanya setelah SPMK.");let a=alloc(x.vendor,x.noPks,x.tanggalPks,x.termin,x.tanggalMulai,x.tanggalAkhir,x.satuanKerja,x.jenisBarang,x.satuan,+x.tarif,+x.volume,+x.tahunPks);pr.allocations.push(a);pr.vendor=x.vendor;pr.contract.noPks=x.noPks;pr.contract.tanggalPks=x.tanggalPks;pr.contract.tanggalMulai=x.tanggalMulai;pr.contract.tanggalAkhir=x.tanggalAkhir;save();toast("Alokasi tersimpan. Nilai otomatis dihitung.");render()}function saveMove(e,type){e.preventDefault();let x=fd(e.target),pr=db.procurements.find(p=>p.id===+x.procId);if(type==="receipts"&&!pr.shipments.length)return toast("Penerimaan baru bisa diinput setelah pengiriman.");let m=mov(x.tanggal,x.noPks,x.termin,x.satuanKerja,x.jenisBarang,x.satuan,+x.tarif,+x.volume,+x.tahunPks,x.dp);pr[type].push(m);save();toast(type==="shipments"?"Pengiriman tersimpan. Penerimaan sekarang aktif.":"Penerimaan tersimpan. Persentase diterima diperbarui.");render()}function contract(id){let x=db.procurements.find(p=>p.id===id);if(!spmk(x))return toast("Vendor dan kontrak baru dapat diisi setelah SPMK.");let vendor=prompt("Vendor bertanggung jawab:",x.vendor||"");if(vendor===null)return;let no=prompt("No PKS:",x.contract.noPks||"");if(no===null)return;let tp=prompt("Tanggal Perjanjian sesuai kontrak (YYYY-MM-DD):",x.contract.tanggalPerjanjian||today());if(tp===null)return;let tm=prompt("Tanggal Mulai (YYYY-MM-DD):",x.contract.tanggalMulai||today());if(tm===null)return;let ta=prompt("Tanggal Akhir (YYYY-MM-DD):",x.contract.tanggalAkhir||today());if(ta===null)return;x.vendor=vendor.trim();x.contract.noPks=no.trim();x.contract.tanggalPerjanjian=tp.trim();x.contract.tanggalMulai=tm.trim();x.contract.tanggalAkhir=ta.trim();save();toast("Vendor dan kontrak tersimpan.");document.getElementById("modalRoot").innerHTML="";render()}function saveUser(e){e.preventDefault();let x=fd(e.target);if(db.users.some(u=>u.email===x.email))return toast("Email sudah digunakan.");db.users.push(u(db.nextUserId++,x.name,x.email,x.password,x.role,x.bidang));save();toast("User berhasil ditambahkan.");render()}function savePerms(){document.querySelectorAll("[data-perm]").forEach(cb=>{let[r,m,a]=cb.dataset.perm.split("|");db.permissions[r][m][a]=cb.checked});save();toast("Permission berhasil disimpan.")}function toast(msg){document.querySelector(".toast")?.remove();let d=document.createElement("div");d.className="toast";d.textContent=msg;document.body.appendChild(d);setTimeout(()=>d.remove(),3200)}
 
 /* === PATCH v4: input Masa Pelaksanaan + tata waktu sesuai kontrak === */
 function contractDuration(x){let c=x?.contract||{};if(!c.tanggalMulai||!c.tanggalAkhir)return 0;let n=days(c.tanggalMulai,c.tanggalAkhir)+1;return Number.isFinite(n)?Math.max(0,n):0}
@@ -942,11 +954,11 @@ render();
 /* === PATCH v8: real camera capture for Upload DP / Dokumen ===
    - Upload DP / Nama File now supports direct camera capture through getUserMedia.
    - Fallback for mobile browsers uses input accept=image/* capture=environment.
-   - Captured images are stored in localStorage as data URLs for this frontend demo.
+   - Captured images are stored in __MPB_STORAGE as data URLs for this frontend demo.
 */
 const CAMERA_STORE_KEY_V8 = "mpb_camera_captures_v8";
-function cameraStoreV8(){try{return JSON.parse(localStorage.getItem(CAMERA_STORE_KEY_V8)||"{}");}catch{return {};}}
-function saveCameraCaptureV8(name, dataUrl){const store=cameraStoreV8();store[name]=dataUrl;localStorage.setItem(CAMERA_STORE_KEY_V8, JSON.stringify(store));}
+function cameraStoreV8(){try{return JSON.parse(__MPB_STORAGE.getItem(CAMERA_STORE_KEY_V8)||"{}");}catch{return {};}}
+function saveCameraCaptureV8(name, dataUrl){const store=cameraStoreV8();store[name]=dataUrl;__MPB_STORAGE.setItem(CAMERA_STORE_KEY_V8, JSON.stringify(store));}
 function cameraCaptureHtmlV8(hiddenName, label="Ambil Foto Langsung dari Kamera"){
   return `<div class="cameraCaptureBox">
     <input type="hidden" name="${hiddenName}" data-camera-hidden>
@@ -1271,659 +1283,1252 @@ function saveMultiMovement(e,type){
 }
 render();
 
-
-/* === PATCH v18: username-only login, no email credential === */
+/* === PATCH v23: Compact Approval page + horizontal approval flow === */
 (function(){
-  const DEFAULT_DEMO_PASSWORD = "demo123";
-  const PRIVILEGED_APPROVED_ALL = ["Kadivre","Wakadivre","PBJ","Kadep Suike","Kadep SUIKE","Admin"];
-  const roleUsernameMap = {
-    "Admin":"admin",
-    "PBJ":"pbj",
-    "Kadivre":"kadivre",
-    "Wakadivre":"wakadivre",
-    "Kadep Suike":"kadep_suike",
-    "Kadep SUIKE":"kadep_suike",
-    "Legal":"legal",
-    "Vendor":"vendor",
-    "KSS Sarpra KPH":"kss_kph",
-    "TPHP":"tphp",
-    "PPHP":"pphp",
-    "Kasi Sarpra":"kasi_sarpra",
-    "Kasi Angja":"kasi_angja",
-    "Korektor Pajak":"korektor_pajak",
-    "Korektor Angja":"korektor_angja",
-    "KSS Angja":"kss_angja",
-    "Umum":"umum"
-  };
-  function slugUsername(value){
-    return String(value||"")
-      .toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-      .replace(/[^a-z0-9]+/g,"_")
-      .replace(/^_+|_+$/g,"") || "user";
-  }
-  function deriveUsername(user, used){
-    let base="";
-    if(user.username) base=slugUsername(user.username);
-    else if(user.role==="Bidang Terkait") base=user.bidang?`bidang_${slugUsername(user.bidang)}`:"bidang_terkait";
-    else base=roleUsernameMap[user.role] || slugUsername(user.name || user.email || user.role);
-    let candidate=base, i=2;
-    while(used.has(candidate)){ candidate=`${base}_${i++}`; }
-    used.add(candidate);
-    return candidate;
-  }
-  function normalizeUsersToUsername(){
-    if(!db || !Array.isArray(db.users)) return;
-    const used=new Set();
-    db.users.forEach(user=>{
-      user.username=deriveUsername(user, used);
-      user.password=DEFAULT_DEMO_PASSWORD;
-      if(user.role==="Kadep Suike") user.role="Kadep Suike";
-      if(user.active===undefined) user.active=true;
-    });
-    // Tambahkan role penting yang mungkin belum ada di data lama.
-    const required = [
-      {name:"Wakadivre",username:"wakadivre",role:"Wakadivre",bidang:"Direksi"},
-      {name:"Kadep SUIKE",username:"kadep_suike",role:"Kadep Suike",bidang:"SUIKE"},
-      {name:"TPHP KPH",username:"tphp",role:"TPHP",bidang:"KPH"},
-      {name:"PPHP",username:"pphp",role:"PPHP",bidang:"Divre"}
-    ];
-    required.forEach(r=>{
-      if(!db.users.some(u=>u.username===r.username)){
-        db.users.push({id:db.nextUserId++,name:r.name,username:r.username,email:"",password:DEFAULT_DEMO_PASSWORD,role:r.role,bidang:r.bidang,active:true});
-      }
-    });
-    try{ save(); }catch(e){}
-  }
-  normalizeUsersToUsername();
+  const DEMO_PASSWORD_V23 = "demo123";
+  const PRIV_APPROVED_ALL_V23 = ["Kadivre","Wakadivre","PBJ","Kadep Suike","Kadep SUIKE","Admin"];
 
-  login=function(){return`<section class="login"><div class="loginHero"><div class="loginBrand"><img src="${esc(CONFIG.logoUrl)}"><div><b>${esc(CONFIG.appName)}</b><span>${esc(CONFIG.organizationName)}</span></div></div><h1>Monitoring pengadaan barang yang rapi, terkontrol, dan berbasis PIC.</h1><p>Login menggunakan username internal. Menu dan approval otomatis mengikuti role PIC.</p><div class="badges"><span>Username Login</span><span>Role-based Access</span><span>Approval by PIC</span><span>File-click Ready</span></div></div><div class="loginPanel"><div class="loginCard"><h2>Masuk Aplikasi</h2><p>Gunakan username demo sesuai role untuk menguji akses.</p><form id="loginForm"><div class="field"><label>Username</label><input name="username" value="admin" autocomplete="username" required></div><div class="field" style="margin-top:12px"><label>Password</label><input type="password" name="password" value="demo123" autocomplete="current-password" required></div><button class="btn primary" style="width:100%;margin-top:18px">Login</button></form><div class="demo"><b>Username demo:</b><br>Admin: <b>admin</b> / demo123<br>Bidang IT: <b>bidang_it</b> / demo123<br>Bidang Umum: <b>bidang_umum</b> / demo123<br>PBJ: <b>pbj</b> / demo123<br>Kadivre: <b>kadivre</b> / demo123<br>Wakadivre: <b>wakadivre</b> / demo123<br>Kadep SUIKE: <b>kadep_suike</b> / demo123<br>Legal: <b>legal</b> / demo123<br>KPH: <b>kss_kph</b> / demo123</div></div></div></section>`};
+  function roleUserSlugV23(user){
+    const fixed={"Admin":"admin","PBJ":"pbj","Kadivre":"kadivre","Wakadivre":"wakadivre","Kadep Suike":"kadep_suike","Kadep SUIKE":"kadep_suike","Legal":"legal","Vendor":"vendor","KSS Sarpra KPH":"kss_kph","TPHP":"tphp","PPHP":"pphp","Kasi Sarpra":"kasi_sarpra","Kasi Angja":"kasi_angja","Korektor Pajak":"korektor_pajak","Korektor Angja":"korektor_angja","KSS Angja":"kss_angja","Umum":"umum"};
+    if(user.role==="Bidang Terkait") return user.bidang?`bidang_${slugV23(user.bidang)}`:"bidang_terkait";
+    return fixed[user.role] || slugV23(user.name||user.email||user.role||"user");
+  }
+  function slugV23(v){return String(v||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"")||"user";}
+  function ensureUsernameLoginV23(){
+    try{
+      const used=new Set();
+      (db.users||[]).forEach(u=>{
+        let base=slugV23(u.username||roleUserSlugV23(u));
+        let name=base,i=2;
+        while(used.has(name)){name=`${base}_${i++}`;}
+        used.add(name);
+        u.username=name;
+        u.password=DEMO_PASSWORD_V23;
+      });
+      const req=[
+        {name:"Wakadivre",username:"wakadivre",role:"Wakadivre",bidang:"Direksi"},
+        {name:"Kadep SUIKE",username:"kadep_suike",role:"Kadep Suike",bidang:"SUIKE"},
+        {name:"TPHP KPH",username:"tphp",role:"TPHP",bidang:"KPH"},
+        {name:"PPHP",username:"pphp",role:"PPHP",bidang:"Divre"}
+      ];
+      req.forEach(r=>{if(!db.users.some(u=>u.username===r.username)){db.users.push({id:db.nextUserId++,email:"",password:DEMO_PASSWORD_V23,active:true,...r});}});
+      save();
+    }catch(e){console.warn("Migrasi username v23 gagal", e);}
+  }
+  ensureUsernameLoginV23();
 
-  bindLogin=function(){
+  login = function login(){return `<section class="login"><div class="loginHero"><div class="loginBrand"><img src="${esc(CONFIG.logoUrl)}"><div><b>${esc(CONFIG.appName)}</b><span>${esc(CONFIG.organizationName)}</span></div></div><h1>Monitoring pengadaan barang yang rapi, terkontrol, dan berbasis PIC.</h1><p>Login memakai username internal. Halaman approval dibuat ringkas: klik nama pengadaan untuk melihat alur approval horizontal dan tombol approve sesuai PIC.</p><div class="badges"><span>Username Login</span><span>Approval by PIC</span><span>Compact Approval</span><span>Horizontal Flow</span></div></div><div class="loginPanel"><div class="loginCard"><h2>Masuk Aplikasi</h2><p>Gunakan username demo sesuai role.</p><form id="loginForm"><div class="field"><label>Username</label><input name="username" value="admin" autocomplete="username" required></div><div class="field" style="margin-top:12px"><label>Password</label><input type="password" name="password" value="demo123" autocomplete="current-password" required></div><button class="btn primary" style="width:100%;margin-top:18px">Login</button></form><div class="demo"><b>Username demo:</b><br>Admin: <b>admin</b> / demo123<br>PBJ: <b>pbj</b> / demo123<br>Kadivre: <b>kadivre</b> / demo123<br>Wakadivre: <b>wakadivre</b> / demo123<br>Kadep SUIKE: <b>kadep_suike</b> / demo123<br>Legal: <b>legal</b> / demo123<br>KPH: <b>kss_kph</b> / demo123</div></div></div></section>`};
+  bindLogin = function bindLogin(){
     const form=document.getElementById("loginForm");
     if(!form) return;
     form.onsubmit=e=>{
       e.preventDefault();
-      const x=fd(e.target);
-      const inputUsername=String(x.username||"").trim().toLowerCase();
-      const inputPassword=String(x.password||"");
-      const found=db.users.find(v=>v.active && String(v.username||"").toLowerCase()===inputUsername && v.password===inputPassword);
-      if(!found) return toast("Username atau password tidak sesuai.");
-      session={id:found.id,name:found.name,role:found.role,username:found.username};
-      try{ localStorage.setItem(SESSION_KEY,JSON.stringify(session)); }catch(e){}
+      const x=fd(e.target), username=String(x.username||"").trim().toLowerCase();
+      const u=db.users.find(v=>v.active && String(v.username||"").toLowerCase()===username && v.password===String(x.password||""));
+      if(!u) return toast("Username atau password tidak sesuai.");
+      session={id:u.id,name:u.name,role:u.role,username:u.username};
+      try{__MPB_STORAGE.setItem(SESSION_KEY,JSON.stringify(session));}catch(e){}
       state.page="dashboard";
       render();
     };
   };
 
-  users=function(){
-    if(!can("User Management")) return denied("Anda tidak memiliki akses User Management.");
-    return`<div class="split"><div class="card pad"><h2 style="margin-top:0">Tambah User</h2>${can("User Management","tambah")?`<form id="userForm"><div class="formGrid" style="grid-template-columns:1fr"><div class="field"><label>Nama</label><input name="name" required></div><div class="field"><label>Username</label><input name="username" autocomplete="username" placeholder="contoh: pbj_area_1" required></div><div class="field"><label>Password</label><input name="password" value="demo123" required></div><div class="field"><label>Role</label><select name="role">${ROLES.map(r=>`<option>${esc(r)}</option>`).join("")}</select></div><div class="field"><label>Bidang</label><input name="bidang" required></div><button class="btn primary">Tambah User</button></div></form>`:`<div class="help warn">Role Anda tidak dapat menambah user.</div>`}</div><div class="tableWrap"><table><thead><tr><th>Nama</th><th>Username</th><th>Role</th><th>Bidang</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${db.users.map(x=>`<tr><td><b>${esc(x.name)}</b></td><td><span class="badge blue">${esc(x.username||"-")}</span></td><td>${esc(x.role)}</td><td>${esc(x.bidang)}</td><td><span class="badge ${x.active?"green":"gray"}">${x.active?"Aktif":"Nonaktif"}</span></td><td>${can("User Management","edit")&&x.role!=="Admin"?`<button class="btn ghost small" data-toggle-user="${x.id}">${x.active?"Nonaktifkan":"Aktifkan"}</button>`:"-"}</td></tr>`).join("")}</tbody></table></div></div>`;
-  };
-
-  saveUser=function(e){
-    e.preventDefault();
-    const x=fd(e.target);
-    const username=slugUsername(x.username);
-    if(db.users.some(u=>String(u.username||"").toLowerCase()===username)) return toast("Username sudah digunakan.");
-    db.users.push({
-      id:db.nextUserId++,
-      name:x.name,
-      username,
-      email:"",
-      password:x.password||DEFAULT_DEMO_PASSWORD,
-      role:x.role,
-      bidang:x.bidang,
-      active:true
-    });
-    save();
-    toast("User berhasil ditambahkan dengan username.");
-    render();
-  };
-
-  // Pastikan menu Approved Semua tetap dibatasi sesuai ketentuan terbaru.
-  const oldCan = can;
-  can=function(m,a="lihat"){
-    if(!session) return false;
-    if(session.role==="Admin") return true;
-    if(m==="Approved Semua" || m==="Evaluasi Approved") return PRIVILEGED_APPROVED_ALL.includes(session.role);
-    return !!db.permissions?.[session.role]?.[m]?.[a];
-  };
-
-  try{ render(); }catch(e){ console.error("Patch username login gagal:", e); }
-})();
-
-
-/* === PATCH v19: Monitoring PIC separate tab, responsive sidebar, clickable dashboard monitoring detail === */
-(function(){
-  const PRIVILEGED_MONITORING_PIC = ["Kadivre","Wakadivre","PBJ","Kadep Suike","Kadep SUIKE","Admin"];
-  if(typeof state === "object"){
-    state.sidebarCollapsed = state.sidebarCollapsed ?? false;
-    state.mobileSidebarOpen = state.mobileSidebarOpen ?? false;
+  function phaseStartIndexV23(phaseIndex){let n=0;for(let i=0;i<phaseIndex;i++)n+=WORKFLOW[i].items.length;return n;}
+  function phaseForStepV23(stepId){return STEPS[Math.min(Math.max(0,stepId||0),STEPS.length-1)]?.phaseIndex || 0;}
+  function stepStatusV23(proc,stepId){
+    if(stepId < proc.currentStep || (proc.completedSteps||[]).includes(stepId)) return "approved";
+    if(stepId === proc.currentStep && proc.currentStep < STEPS.length) return "current";
+    return "locked";
   }
-  try{
-    if(Array.isArray(MODULES) && !MODULES.includes("Monitoring PIC")) MODULES.splice(Math.max(0, MODULES.indexOf("Monitoring Barang")),0,"Monitoring PIC");
-    Object.keys(db.permissions||{}).forEach(role=>{
-      db.permissions[role]["Monitoring PIC"] = db.permissions[role]["Monitoring PIC"] || {lihat:false,tambah:false,edit:false,hapus:false};
-      if(role==="Admin" || db.permissions[role]?.Approval?.lihat || PRIVILEGED_MONITORING_PIC.includes(role)) db.permissions[role]["Monitoring PIC"].lihat = true;
-    });
-    save();
-  }catch(e){console.warn("Patch permission Monitoring PIC tidak dapat disimpan", e)}
-
-  function isPrivilegedPicMonitor(){ return !!session && PRIVILEGED_MONITORING_PIC.includes(session.role); }
-  function isMobileViewport(){ return window.matchMedia && window.matchMedia("(max-width: 860px)").matches; }
-  function closeMobileSidebar(){ state.mobileSidebarOpen=false; }
-  function formatTarget(target){ return target==null ? "Flexible" : `${numID(target)} hari`; }
-  function picRowsScoped(){
-    let rows = typeof picAgingRows === "function" ? picAgingRows() : [];
-    if(isPrivilegedPicMonitor()) return rows;
-    const role=session?.role;
-    const userBidang=cur()?.bidang;
-    return rows.filter(r=>r.pic===role || r.approvedRole===role || (role==="Bidang Terkait" && r.proc?.bidang===userBidang));
+  function stepBadgeV23(proc,stepId){
+    const s=stepStatusV23(proc,stepId);
+    if(s==="approved") return `<span class="badge green">Approved</span>`;
+    if(s==="current") return `<span class="badge yellow">Belum Approved</span>`;
+    return `<span class="badge gray">Menunggu</span>`;
   }
-  function monitoringPicCards(rows){
-    const late=rows.filter(r=>r.color==="red").length;
-    const watch=rows.filter(r=>r.color==="yellow").length;
-    const active=rows.filter(r=>r.type==="Aktif").length;
-    const avg=rows.length ? Math.round(rows.reduce((a,r)=>a+(+r.actual||0),0)/rows.length*10)/10 : 0;
-    return `<div class="grid cards agingCards">
-      ${stat("all","PIC Terlambat",late,"Melewati target atau flexible terlalu lama")}
-      ${stat("all","Perlu Dipantau",watch,"Mendekati batas target approved")}
-      ${stat("all","Tahapan Aktif",active,"Sedang dikerjakan PIC")}
-      ${stat("all","Rata-rata Durasi",`${numID(avg)} hari`,"Durasi pekerjaan/approved PIC")}
+  function currentGateV23(proc){try{return gate(proc,proc.currentStep);}catch(e){return {ok:false,msg:"Tahapan belum siap."};}}
+  function currentActionV23(proc){
+    if(proc.currentStep>=STEPS.length) return `<span class="badge green">Selesai</span>`;
+    const st=STEPS[proc.currentStep], g=currentGateV23(proc);
+    if(!isPic(st)) return `<span class="badge gray">PIC: ${esc(st.pic)}</span>`;
+    if(g.ok) return `<button type="button" class="btn primary small" data-approve="${proc.id}">Approve</button>`;
+    return `<button type="button" class="btn secondary small" data-approval-detail="${proc.id}">Lengkapi</button>`;
+  }
+  function approvalCompactListV23(rows){
+    if(!rows.length) return `<div class="card empty">Tidak ada approval yang menjadi PIC Anda saat ini.</div>`;
+    return `<div class="approvalCompactList">${rows.map(proc=>{const st=STEPS[proc.currentStep], ps=status(proc), du=due(proc);return `<div class="approvalCompactRow">
+      <button type="button" class="approvalNameClick" data-approval-detail="${proc.id}"><b>${esc(proc.nama)}</b><span>${esc(proc.bidang)} • ${esc(proc.jenisBarang)} • ${numID(proc.totalUsulan)} ${esc(proc.satuan)}</span></button>
+      <div class="approvalMeta"><span class="badge ${ps.color}">${esc(ps.text)}</span><span class="badge ${du.color}">${esc(du.text)}</span></div>
+      <div class="approvalStepNow"><small>Tahapan aktif</small><b>${st?esc(st.title):"Selesai"}</b><span>PIC: ${st?esc(st.pic):"-"}</span></div>
+      <div class="approvalCompactAction">${currentActionV23(proc)}</div>
+    </div>`}).join("")}</div>`;
+  }
+
+  approval = function approval(){
+    const apps=vis().filter(x=>x.currentStep<STEPS.length && isPic(STEPS[x.currentStep]));
+    return `<div class="head" style="margin-top:0"><div><h2>Antrian Approval Anda</h2><small>Tampilan dibuat ringkas. Klik nama pengadaan untuk melihat detail approval dan tahapan yang belum approved.</small></div></div>
+      <div class="help ok"><b>Alur baru:</b> nama pengadaan menjadi pintu masuk detail. Di dalam detail, alur approval tampil horizontal/berjejer dan setiap fase/tahapan bisa diklik.</div>
+      <br>${approvalCompactListV23(apps)}`;
+  };
+
+  function phaseRailV23(proc){
+    const selected=(state.flowPhaseByProc&&state.flowPhaseByProc[proc.id]!=null)?+state.flowPhaseByProc[proc.id]:phaseForStepV23(proc.currentStep);
+    return `<div class="approvalPhaseRail">${WORKFLOW.map((ph,idx)=>{
+      const start=phaseStartIndexV23(idx), end=start+ph.items.length-1;
+      const done=ph.items.filter((_,i)=>stepStatusV23(proc,start+i)==="approved").length;
+      const active=proc.currentStep>=start && proc.currentStep<=end;
+      return `<button type="button" class="phaseCard ${selected===idx?"active":""} ${active?"current":""}" data-flow-phase="${idx}" data-proc-id="${proc.id}"><span>Fase ${idx+1}</span><b>${esc(ph.phase)}</b><small>${numID(done)}/${numID(ph.items.length)} approved</small></button>`;
+    }).join("")}</div>`;
+  }
+  function stepRailV23(proc){
+    const selectedPhase=(state.flowPhaseByProc&&state.flowPhaseByProc[proc.id]!=null)?+state.flowPhaseByProc[proc.id]:phaseForStepV23(proc.currentStep);
+    const start=phaseStartIndexV23(selectedPhase), items=WORKFLOW[selectedPhase]?.items||[];
+    const activeStep=(state.flowStepByProc&&state.flowStepByProc[proc.id]!=null)?+state.flowStepByProc[proc.id]:(proc.currentStep>=start&&proc.currentStep<start+items.length?proc.currentStep:start);
+    return `<div class="approvalStepRail">${items.map((it,i)=>{const id=start+i, st=stepStatusV23(proc,id);return `<button type="button" class="stepPill ${st} ${activeStep===id?"active":""}" data-flow-step="${id}" data-proc-id="${proc.id}"><span>${id+1}</span><b>${esc(it.title)}</b><small>${esc(it.pic)}</small></button>`}).join("")}</div>${stepDetailV23(proc,activeStep)}`;
+  }
+  function docsMiniV23(proc, stepId){
+    const docs=(typeof docsForStepV7==="function"?docsForStepV7(proc,stepId):(proc.documents||[]).filter(d=>+d.stepId===+stepId));
+    if(!docs.length) return `<div class="help warn">Belum ada dokumen/foto pada tahapan ini.</div>`;
+    return `<div class="miniDocList">${docs.map(d=>`<div><b>${esc(d.name||"Dokumen")}</b><span>${esc(d.file||d.camera||"-")}</span><small>${esc(d.by||"-")} • ${d.at?new Date(d.at).toLocaleString("id-ID"):"-"}</small></div>`).join("")}</div>`;
+  }
+  function approvalInfoV23(proc, stepId){
+    const ap=(proc.approvals||[]).find(a=>+a.stepId===+stepId);
+    if(!ap) return "";
+    return `<div class="approvalInfo"><b>Approved oleh ${esc(ap.approvedBy||"-")}</b><span>${esc(ap.approvedRole||ap.pic||"-")} • ${ap.approvedAt?new Date(ap.approvedAt).toLocaleString("id-ID"):"-"}</span></div>`;
+  }
+  function stepDetailV23(proc, stepId){
+    const step=STEPS[stepId];
+    if(!step) return `<div class="card empty">Tahapan tidak ditemukan.</div>`;
+    const statusStep=stepStatusV23(proc,stepId), isCurrent=statusStep==="current", g=isCurrent?currentGateV23(proc):{ok:false,msg:""};
+    const target=step.days==null?"Flexible":`${numID(step.days)} hari`;
+    return `<div class="approvalStepDetail ${statusStep}">
+      <div class="stepDetailHead"><div><h3>${esc(step.title)}</h3><p>${esc(step.phase)} • PIC: <b>${esc(step.pic)}</b> • Target: <b>${esc(target)}</b></p></div>${stepBadgeV23(proc,stepId)}</div>
+      <div class="help"><b>Penjelasan:</b> ${esc(step.detail||"-")}</div>
+      ${statusStep==="approved"?approvalInfoV23(proc,stepId):""}
+      ${docsMiniV23(proc,stepId)}
+      ${isCurrent?`<div class="currentApprovalBox"><div class="help ${g.ok?"ok":"warn"}"><b>Status approval:</b> ${esc(g.msg)}</div>${uploadRequirementPanel(proc,stepId)}<div class="approvalStickyAction">${isPic(step)?`<button type="button" class="btn primary" data-approve="${proc.id}" ${g.ok?"":"disabled"}>Approve Tahapan Ini</button>`:`<span class="badge gray">Menunggu PIC ${esc(step.pic)}</span>`}</div></div>`:""}
     </div>`;
   }
-  function monitoringPicTable(rows){
-    if(!rows.length) return `<div class="card empty">Belum ada data Monitoring PIC untuk role Anda.</div>`;
-    return `<div class="tableWrap agingTable"><table><thead><tr><th>PIC</th><th>Pengadaan</th><th>Tahapan</th><th>Mulai Aktif</th><th>Approved</th><th>Target</th><th>Durasi Aktual</th><th>Status</th><th>Aksi</th></tr></thead><tbody>
-      ${rows.map(r=>`<tr>
-        <td data-label="PIC"><b>${esc(r.pic)}</b><br><small>${esc(r.type)}</small></td>
-        <td data-label="Pengadaan"><b>${esc(r.proc.nama)}</b><br><small>${esc(r.proc.bidang)}</small></td>
-        <td data-label="Tahapan"><b>${esc(r.step)}</b><br><small>${esc(r.phase)}</small></td>
-        <td data-label="Mulai Aktif">${d(r.start)}</td>
-        <td data-label="Approved">${r.approved === "-" ? "-" : d(r.approved)}</td>
-        <td data-label="Target">${formatTarget(r.target)}</td>
-        <td data-label="Durasi Aktual">${numID(r.actual)} hari</td>
-        <td data-label="Status"><span class="badge ${r.color}">${esc(r.status)}</span></td>
-        <td data-label="Aksi"><button class="btn ghost small" data-detail="${r.proc.id}">Buka</button></td>
-      </tr>`).join("")}
-    </tbody></table></div>`;
+  function horizontalWorkflowV23(proc){
+    return `<section class="approvalHorizontalWrap"><div class="head compactHead"><div><h2>Alur Approval Pengadaan</h2><small>Fase dibuat berjejer. Klik fase untuk membuka tahapan, lalu klik tahapan untuk melihat detail.</small></div></div>${phaseRailV23(proc)}${stepRailV23(proc)}</section>`;
   }
-  window.monitoringPic = function monitoringPic(){
-    const rows = picRowsScoped();
-    const scopeText = isPrivilegedPicMonitor() ? "Anda dapat melihat Monitoring PIC lintas role." : "Anda hanya melihat Monitoring PIC sesuai role dan pengadaan yang terkait dengan akses Anda.";
-    return `<div class="head" style="margin-top:0"><div><h2>Monitoring PIC</h2><small>Dipisahkan dari Monitoring Barang agar evaluasi approved dan lama pekerjaan PIC lebih jelas.</small></div></div>
-      <div class="help ${isPrivilegedPicMonitor()?"ok":""}">${scopeText}</div>
-      <div style="height:14px"></div>
-      ${monitoringPicCards(rows)}
-      <div class="head"><h2>Detail Lama Approved / Pekerjaan PIC</h2><div class="tools"><span class="badge blue">${isPrivilegedPicMonitor()?"Lintas PIC":"Scope role"}</span></div></div>
-      ${monitoringPicTable(rows)}`;
+  function approvalSummaryV23(proc){
+    const curStep=STEPS[proc.currentStep], ps=status(proc), du=due(proc);
+    return `<div class="kpiRow approvalKpi"><div class="mini"><span>Status</span><b>${esc(ps.text)}</b></div><div class="mini"><span>Progress</span><b>${prog(proc)}%</b></div><div class="mini"><span>PIC Aktif</span><b style="font-size:18px">${curStep?esc(curStep.pic):"Selesai"}</b></div><div class="mini"><span>Tata Waktu</span><b style="font-size:18px">${esc(du.text)}</b></div></div>`;
+  }
+  detail = function detail(id){
+    const proc=db.procurements.find(p=>p.id===+id);
+    if(!proc) return;
+    proc.documents=proc.documents||[];
+    state.flowPhaseByProc=state.flowPhaseByProc||{};
+    state.flowStepByProc=state.flowStepByProc||{};
+    if(state.flowPhaseByProc[proc.id]==null) state.flowPhaseByProc[proc.id]=phaseForStepV23(proc.currentStep);
+    if(state.flowStepByProc[proc.id]==null) state.flowStepByProc[proc.id]=proc.currentStep<STEPS.length?proc.currentStep:STEPS.length-1;
+    document.getElementById("modalRoot").innerHTML=`<div class="modalBack"><div class="modal modalWide approvalDetailModal"><div class="modalHead"><div><h2>${esc(proc.nama)}</h2><small>${esc(proc.bidang)} • ${esc(proc.jenisPengadaan)} • ${numID(proc.totalUsulan)} ${esc(proc.satuan)}</small></div><div class="tools"><button type="button" class="btn ghost small" id="closeModal">Tutup</button></div></div><div class="modalBody">${approvalSummaryV23(proc)}<div class="split approvalRuleSplit" style="margin-top:16px"><div class="help"><b>Aturan:</b> Approval dilakukan oleh PIC tahapan aktif. Jika belum lengkap, upload dokumen/foto terlebih dahulu.</div><div class="help ${isPic(STEPS[proc.currentStep])?"ok":"warn"}">${proc.currentStep<STEPS.length?`PIC aktif: <b>${esc(STEPS[proc.currentStep].pic)}</b>. Role login: <b>${esc(session.role)}</b>.`:"Pengadaan selesai."}</div></div>${horizontalWorkflowV23(proc)}</div></div></div>`;
+    const close=document.getElementById("closeModal"); if(close) close.onclick=()=>document.getElementById("modalRoot").innerHTML="";
+    bindApprovalForms();
   };
 
-  // Override Monitoring Barang supaya tidak lagi mencampur Monitoring PIC.
-  window.monitoring = function monitoring(){
-    const rows=vis();
-    const shTotal=rows.reduce((a,x)=>a+shipTotal(x),0), reTotal=rows.reduce((a,x)=>a+recTotal(x),0), usTotal=rows.reduce((a,x)=>a+x.totalUsulan,0);
-    return `<div class="head" style="margin-top:0"><div><h2>Monitoring Barang Sesuai Usulan</h2><small>Fokus pada volume usulan, pengiriman, dan penerimaan barang.</small></div></div>
-      <div class="grid cards monitoringMetricCards">
-        <button class="card stat statButton" data-monitoring-detail="usulan"><div class="statTitle">Total Usulan</div><div class="statVal">${numID(usTotal)}</div><div class="note">Klik untuk melihat detail usulan barang</div></button>
-        <button class="card stat statButton" data-monitoring-detail="terkirim"><div class="statTitle">Total Terkirim</div><div class="statVal">${numID(shTotal)}</div><div class="note">Klik untuk melihat detail pengiriman</div></button>
-        <button class="card stat statButton" data-monitoring-detail="diterima"><div class="statTitle">Total Diterima</div><div class="statVal">${numID(reTotal)}</div><div class="note">Klik untuk melihat detail penerimaan</div></button>
-        ${stat("all","% Diterima",`${pct(reTotal,usTotal)}%`,"Persentase total diterima")}
-      </div>
-      <div class="tableWrap"><table><thead><tr><th>Pengadaan</th><th>Bidang</th><th>Total Usulan</th><th>Total Terkirim</th><th>Total Diterima</th><th>% Terkirim</th><th>% Diterima</th><th>Catatan</th></tr></thead><tbody>
-        ${rows.map(x=>{let sh=shipTotal(x),re=recTotal(x);return`<tr><td data-label="Pengadaan"><b>${esc(x.nama)}</b><br><small>${esc(x.jenisBarang)}</small></td><td data-label="Bidang">${esc(x.bidang)}</td><td data-label="Total Usulan">${numID(x.totalUsulan)} ${esc(x.satuan)}</td><td data-label="Total Terkirim">${numID(sh)}</td><td data-label="Total Diterima">${numID(re)}</td><td data-label="% Terkirim"><div class="progress"><span style="width:${pct(sh,x.totalUsulan)}%"></span></div><small>${pct(sh,x.totalUsulan)}%</small></td><td data-label="% Diterima"><div class="progress"><span style="width:${pct(re,x.totalUsulan)}%"></span></div><small>${pct(re,x.totalUsulan)}%</small></td><td data-label="Catatan">${re>=x.totalUsulan?`<span class="badge green">Diterima 100%</span>`:`<span class="badge yellow">Belum 100%</span>`}</td></tr>`}).join("")}
-      </tbody></table></div>`;
-  };
-
-  window.summary = function summary(){
-    let r=vis(),us=r.reduce((a,x)=>a+x.totalUsulan,0),sh=r.reduce((a,x)=>a+shipTotal(x),0),re=r.reduce((a,x)=>a+recTotal(x),0);
-    return `<div class="kpiRow dashboardMonitoringActions">
-      <button type="button" class="mini metricAction" data-monitoring-detail="usulan"><span>Total Usulan</span><b>${numID(us)}</b><small>Klik lihat detail</small></button>
-      <button type="button" class="mini metricAction" data-monitoring-detail="terkirim"><span>Total Terkirim</span><b>${numID(sh)}</b><small>${pct(sh,us)}% • klik detail</small></button>
-      <button type="button" class="mini metricAction" data-monitoring-detail="diterima"><span>Total Diterima</span><b>${numID(re)}</b><small>${pct(re,us)}% • klik detail</small></button>
-    </div>`;
-  };
-
-  window.dashboard = function dashboard(){
-    let r=vis(),done=r.filter(x=>x.currentStep>=STEPS.length).length,run=r.filter(x=>x.currentStep<STEPS.length).length,need=r.filter(x=>isPic(STEPS[x.currentStep])).length,bc={};
-    r.forEach(x=>bc[x.bidang]=(bc[x.bidang]||0)+1);
-    return `<div class="grid cards">${stat("all","Total Pengadaan",r.length,"Seluruh pengadaan yang dapat Anda akses")}${stat("done","Selesai",done,"Pengadaan selesai")}${stat("running","Sedang Berlangsung",run,"Klik untuk melihat proses berjalan")}${stat("need","Perlu Approval",need,"Tahapan sesuai PIC login")}</div>
-      <div class="split"><div class="card pad"><div class="head" style="margin-top:0"><h2>Pengadaan per Bidang</h2></div>${Object.entries(bc).map(([b,n])=>`<div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:11px 0"><div><b>${esc(b)}</b><br><small>${numID(n)} pengadaan</small></div><span class="badge blue">${numID(n)}</span></div>`).join("")||`<div class="empty">Belum ada data.</div>`}</div>
-      <div class="card pad"><div class="head" style="margin-top:0"><h2>Monitoring Barang</h2><button class="btn ghost small" data-go="monitoring">Buka Tab Monitoring Barang</button></div>${summary()}<div class="help ok" style="margin-top:14px">Klik Total Usulan, Total Terkirim, atau Total Diterima untuk membuka detail data.</div></div></div>
-      <div class="head"><h2>Daftar Pengadaan</h2><div class="tools">${canInput()?`<button class="btn primary small" data-go="input">+ Input Pengadaan</button>`:""}<button class="btn ghost small" data-reset>Reset Data Demo</button></div></div>${procTable(filtered())}`;
-  };
-
-  function movementRows(type){
-    const list=[];
-    vis().forEach(proc=>{
-      (proc[type]||[]).forEach(row=>list.push({...row, proc}));
+  function bindApprovalFlowV23(){
+    document.querySelectorAll("[data-flow-phase]").forEach(b=>b.onclick=()=>{
+      const pid=+b.dataset.procId, phase=+b.dataset.flowPhase;
+      state.flowPhaseByProc=state.flowPhaseByProc||{}; state.flowStepByProc=state.flowStepByProc||{};
+      state.flowPhaseByProc[pid]=phase; state.flowStepByProc[pid]=phaseStartIndexV23(phase);
+      detail(pid);
     });
-    return list;
+    document.querySelectorAll("[data-flow-step]").forEach(b=>b.onclick=()=>{
+      const pid=+b.dataset.procId, step=+b.dataset.flowStep;
+      state.flowStepByProc=state.flowStepByProc||{}; state.flowPhaseByProc=state.flowPhaseByProc||{};
+      state.flowStepByProc[pid]=step; state.flowPhaseByProc[pid]=phaseForStepV23(step);
+      detail(pid);
+    });
+    document.querySelectorAll("[data-approval-detail]").forEach(b=>b.onclick=()=>detail(+b.dataset.approvalDetail));
   }
-  function monitoringDetailRows(type){
-    if(type==="usulan"){
-      const rows=vis();
-      return `<table><thead><tr><th>Pengadaan</th><th>Bidang</th><th>Jenis Barang</th><th>Total Usulan</th><th>Total Terkirim</th><th>Total Diterima</th><th>Status</th></tr></thead><tbody>
-        ${rows.map(x=>`<tr><td data-label="Pengadaan"><b>${esc(x.nama)}</b></td><td data-label="Bidang">${esc(x.bidang)}</td><td data-label="Jenis Barang">${esc(x.jenisBarang)}</td><td data-label="Total Usulan">${numID(x.totalUsulan)} ${esc(x.satuan)}</td><td data-label="Total Terkirim">${numID(shipTotal(x))}</td><td data-label="Total Diterima">${numID(recTotal(x))}</td><td data-label="Status"><span class="badge ${recTotal(x)>=x.totalUsulan?"green":"yellow"}">${recTotal(x)>=x.totalUsulan?"Diterima 100%":"Belum 100%"}</span></td></tr>`).join("")}
-      </tbody></table>`;
+  const oldBindPageV23=bindPage;
+  bindPage=function bindPage(){
+    oldBindPageV23();
+    bindApprovalFlowV23();
+    document.querySelectorAll("[data-approve]").forEach(b=>b.onclick=()=>approve(+b.dataset.approve));
+  };
+  const oldBindApprovalFormsV23=bindApprovalForms;
+  bindApprovalForms=function bindApprovalForms(){
+    try{oldBindApprovalFormsV23();}catch(e){}
+    bindApprovalFlowV23();
+    document.querySelectorAll("[data-approve]").forEach(b=>b.onclick=()=>approve(+b.dataset.approve));
+    const doc=document.getElementById("docForm"); if(doc) doc.onsubmit=saveDocumentForm;
+    try{bindContractForm();bindMultiForms();bindFormattedInputs();}catch(e){}
+  };
+  const oldApproveV23=approve;
+  approve=function approve(id){
+    const proc=db.procurements.find(p=>p.id===+id);
+    oldApproveV23(+id);
+    if(proc){
+      state.flowPhaseByProc=state.flowPhaseByProc||{}; state.flowStepByProc=state.flowStepByProc||{};
+      state.flowPhaseByProc[proc.id]=phaseForStepV23(proc.currentStep);
+      state.flowStepByProc[proc.id]=proc.currentStep<STEPS.length?proc.currentStep:STEPS.length-1;
     }
-    const rows=movementRows(type==="terkirim"?"shipments":"receipts");
-    if(!rows.length) return `<div class="empty">Belum ada data ${type==="terkirim"?"pengiriman":"penerimaan"}.</div>`;
-    return `<table><thead><tr><th>Pengadaan</th><th>Tanggal</th><th>No PKS</th><th>Termin</th><th>Satuan Kerja</th><th>Barang</th><th>Volume</th><th>Nilai</th><th>Upload DP / File Dokumen</th></tr></thead><tbody>
-      ${rows.map(x=>`<tr><td data-label="Pengadaan"><b>${esc(x.proc.nama)}</b></td><td data-label="Tanggal">${d(x.tanggal)}</td><td data-label="No PKS">${esc(x.noPks||x.proc.contract?.noPks||"-")}</td><td data-label="Termin">${esc(x.termin||"-")}</td><td data-label="Satuan Kerja">${esc(x.satuanKerja||"-")}</td><td data-label="Barang">${esc(x.jenisBarang||x.proc.jenisBarang)}</td><td data-label="Volume">${numID(x.volume||0)} ${esc(x.satuan||x.proc.satuan)}</td><td data-label="Nilai">${rp(x.nilai||0)}</td><td data-label="Upload">${esc(x.dp||"-")}</td></tr>`).join("")}
-    </tbody></table>`;
-  }
-  window.openMonitoringDetail = function openMonitoringDetail(type){
-    const labels={usulan:"Detail Total Usulan",terkirim:"Detail Total Terkirim",diterima:"Detail Total Diterima"};
-    document.getElementById("modalRoot").innerHTML=`<div class="modalBack"><div class="modal"><div class="modalHead"><div><h2>${labels[type]||"Detail Monitoring Barang"}</h2><small>Detail data dari kartu Monitoring Barang pada dashboard.</small></div><button class="btn ghost small" id="closeMonitoringDetail">Tutup</button></div><div class="modalBody"><div class="tableWrap detailMonitoringTable">${monitoringDetailRows(type)}</div></div></div></div>`;
-    const close=document.getElementById("closeMonitoringDetail"); if(close) close.onclick=()=>document.getElementById("modalRoot").innerHTML="";
   };
-
-  const oldCanV19 = can;
-  can = function(m,a="lihat"){
-    if(!session) return false;
-    if(session.role==="Admin") return true;
-    if(m==="Monitoring PIC") return !!db.permissions?.[session.role]?.[m]?.[a] || !!db.permissions?.[session.role]?.Approval?.lihat || PRIVILEGED_MONITORING_PIC.includes(session.role);
-    return oldCanV19(m,a);
-  };
-
-  window.shell = function shell(){
-    const u=cur();
-    const groups=[
-      ["Utama",[nav("dashboard","Dashboard","Dashboard","⌂"),nav("procurements","Data Pengadaan","Data Pengadaan","▦"),nav("input","Input Pengadaan","Input Pengadaan","＋"),nav("approval","Approval","Approval","✓")]],
-      ["Operasional",[nav("masa","Masa Pelaksanaan","Masa Pelaksanaan","◷"),nav("allocation","Alokasi KPH","Alokasi KPH","↦"),nav("shipping","Pengiriman","Pengiriman Barang","⇢"),nav("receiving","Penerimaan","Penerimaan Barang","⇠")]],
-      ["Monitoring",[nav("monitoring","Monitoring Barang","Monitoring Barang","◉"),nav("monitoringPic","Monitoring PIC","Monitoring PIC","◷")]],
-      ["Admin",[nav("roles","Role & Permission","Role & Permission","⚙"),nav("users","User Management","User Management","☷"),nav("branding","Branding","Branding","✦")]]
-    ];
-    return `<div class="shell ${state.sidebarCollapsed?"sidebarCollapsed":""} ${state.mobileSidebarOpen?"mobileSidebarOpen":""}"><button class="sidebarBackdrop" data-sidebar-close aria-label="Tutup menu"></button><aside class="sidebar"><div class="brand"><img src="${esc(CONFIG.logoUrl)}"><div><b>${esc(CONFIG.shortName)}</b><span>${esc(CONFIG.appName)}</span></div><button class="btn ghost small sidebarHide" data-sidebar-toggle type="button">${state.sidebarCollapsed?"›":"‹"}</button></div>${groups.map(([t,items])=>{let v=items.filter(i=>can(i.module));return v.length?`<div><div class="navTitle">${t}</div>${v.map(i=>`<button class="navBtn ${state.page===i.page?'active':''}" data-nav="${i.page}" title="${esc(i.label)}"><span class="ico">${i.ico}</span><span class="navText">${i.label}</span></button>`).join("")}</div>`:""}).join("")}<div class="sideUser"><b>${esc(u.name)}</b><span>${esc(u.role)} • ${esc(u.bidang)}</span></div></aside><main class="main"><div class="topbar"><button class="btn ghost small menuToggle" data-sidebar-toggle type="button">☰ Menu</button><div class="topbarTitle"><div class="kicker">${esc(CONFIG.organizationName)} Procurement System</div><h1>${title()}</h1></div><div class="userChip"><div class="avatar">${esc(u.name[0])}</div><div><b>${esc(u.name)}</b><span>${esc(u.role)}</span></div><button id="logout" class="btn ghost small">Logout</button></div></div><div id="content"></div><div id="modalRoot"></div></main></div>`;
-  };
-  window.bindShell = function bindShell(){
-    document.querySelectorAll("[data-nav]").forEach(b=>b.onclick=()=>{state.page=b.dataset.nav;closeMobileSidebar();render()});
-    document.querySelectorAll("[data-sidebar-toggle]").forEach(b=>b.onclick=()=>{if(isMobileViewport()) state.mobileSidebarOpen=!state.mobileSidebarOpen; else state.sidebarCollapsed=!state.sidebarCollapsed; render()});
-    document.querySelectorAll("[data-sidebar-close]").forEach(b=>b.onclick=()=>{state.mobileSidebarOpen=false;render()});
-    const logout=document.getElementById("logout");
-    if(logout) logout.onclick=()=>{try{localStorage.removeItem(SESSION_KEY)}catch(e){} session=null;render()};
-  };
-  window.title = function title(){return {dashboard:"Dashboard Pengadaan",procurements:"Data Pengadaan",input:"Input Data Pengadaan",approval:"Approval Sesuai PIC",masa:"Masa Pelaksanaan Pekerjaan",allocation:"Alokasi Barang Per KPH",shipping:"Pengiriman Barang",receiving:"Penerimaan Barang",monitoring:"Monitoring Barang",monitoringPic:"Monitoring PIC",roles:"Role & Permission",users:"User Management",branding:"Branding Aplikasi"}[state.page]||"Aplikasi"};
-  window.page = function page(){
-    const c=document.getElementById("content");
-    const map={dashboard,procurements,input,approval,masa,allocation,shipping,receiving,monitoring,monitoringPic,roles,users,branding};
-    c.innerHTML=(map[state.page]||dashboard)();
-    bindPage();
-  };
-  const oldBindPageV19 = bindPage;
-  window.bindPage = function bindPage(){
-    oldBindPageV19();
-    document.querySelectorAll("[data-monitoring-detail]").forEach(b=>b.onclick=()=>openMonitoringDetail(b.dataset.monitoringDetail));
-  };
-  try{
-    monitoringPic = window.monitoringPic;
-    monitoring = window.monitoring;
-    summary = window.summary;
-    dashboard = window.dashboard;
-    shell = window.shell;
-    bindShell = window.bindShell;
-    title = window.title;
-    page = window.page;
-    bindPage = window.bindPage;
-  }catch(e){ console.warn("Global binding patch v19 tidak diperlukan atau tidak tersedia", e); }
-  try{ render(); }catch(e){ console.error("Patch v19 responsive monitoring gagal:", e); }
+  render();
 })();
 
-/* === PATCH v20: hide Form Approval Alur Lengkap for cleaner Approval page === */
+/* PATCH v23.1: keep approval detail focused on the next unapproved step after approve */
 (function(){
-  window.approval = function approval(){
-    const apps = vis().filter(x => x.currentStep < STEPS.length && isPic(STEPS[x.currentStep]));
-    return `<div class="head" style="margin-top:0">
-      <div>
-        <h2>Antrian Approval Anda</h2>
-        <small>Halaman dibuat lebih clean. Alur lengkap tidak ditampilkan di bawah antrian.</small>
-      </div>
-    </div>
-    <div class="help">Tombol approve hanya aktif jika role login sama dengan PIC tahapan berjalan. Admin dapat melakukan semua approval.</div>
-    <br>
-    ${apps.length ? procTable(apps) : `<div class="card empty">Tidak ada approval yang menjadi PIC Anda saat ini.</div>`}`;
+  const prevApproveV231 = approve;
+  approve = function approve(id){
+    const proc=db.procurements.find(p=>p.id===+id);
+    const before=proc?proc.currentStep:null;
+    prevApproveV231(+id);
+    if(proc && proc.currentStep!==before){
+      state.flowPhaseByProc=state.flowPhaseByProc||{};
+      state.flowStepByProc=state.flowStepByProc||{};
+      state.flowPhaseByProc[proc.id]=proc.currentStep<STEPS.length?STEPS[proc.currentStep].phaseIndex:STEPS[STEPS.length-1].phaseIndex;
+      state.flowStepByProc[proc.id]=proc.currentStep<STEPS.length?proc.currentStep:STEPS.length-1;
+      if(document.getElementById("modalRoot")?.innerHTML) detail(proc.id); else render();
+    }
   };
-
-  try{
-    approval = window.approval;
-    if(state && state.page === "approval") render();
-  }catch(e){ console.error("Patch v20 clean approval gagal:", e); }
+  render();
 })();
 
-/* === PATCH v21: user edit/delete, upload compression, clickable Pengadaan per Bidang === */
+/* === PATCH v24: Vertical approval flow / timeline approval === */
 (function(){
-  const UPLOAD_STORE_KEY_V21 = "mpb_upload_compressed_v21";
-  const MAX_UPLOAD_DIMENSION_V21 = 1280;
-  const JPEG_QUALITY_V21 = 0.72;
+  const DEMO_PASSWORD_V24 = "demo123";
 
-  function slugUsernameV21(v){
-    return String(v||"")
-      .trim()
-      .toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-      .replace(/[^a-z0-9]+/g,"_")
-      .replace(/^_+|_+$/g,"") || "user";
-  }
-  function uniqueUsernameV21(username, id){
-    const u=slugUsernameV21(username);
-    return !db.users.some(x=>x.id!==id && String(x.username||"").toLowerCase()===u);
-  }
-  function currentUserIdV21(){return session?.id;}
-  function adminCountV21(){return db.users.filter(u=>u.role==="Admin").length;}
-  function canDeleteUserV21(user){
-    if(!can("User Management","hapus")) return false;
-    if(user.id===currentUserIdV21()) return false;
-    if(user.role==="Admin" && adminCountV21()<=1) return false;
-    return true;
-  }
-  function userActionButtonsV21(user){
-    const edit = can("User Management","edit") ? `<button type="button" class="btn ghost small" data-edit-user="${user.id}">Edit</button>` : "";
-    const toggle = can("User Management","edit") && user.id!==currentUserIdV21() ? `<button type="button" class="btn ghost small" data-toggle-user="${user.id}">${user.active?"Nonaktifkan":"Aktifkan"}</button>` : "";
-    const del = canDeleteUserV21(user) ? `<button type="button" class="btn danger small" data-delete-user="${user.id}">Hapus</button>` : "";
-    return `<div class="tools userActions">${edit}${toggle}${del || (!edit&&!toggle?"-":"")}</div>`;
-  }
+  login = function login(){return `<section class="login"><div class="loginHero"><div class="loginBrand"><img src="${esc(CONFIG.logoUrl)}"><div><b>${esc(CONFIG.appName)}</b><span>${esc(CONFIG.organizationName)}</span></div></div><h1>Monitoring pengadaan barang yang rapi, terkontrol, dan berbasis PIC.</h1><p>Login memakai username internal. Halaman approval dibuat ringkas: klik nama pengadaan untuk melihat alur approval vertikal dan approve sesuai PIC.</p><div class="badges"><span>Username Login</span><span>Approval by PIC</span><span>Compact Approval</span><span>Vertical Flow</span></div></div><div class="loginPanel"><div class="loginCard"><h2>Masuk Aplikasi</h2><p>Gunakan username demo sesuai role.</p><form id="loginForm"><div class="field"><label>Username</label><input name="username" value="admin" autocomplete="username" required></div><div class="field" style="margin-top:12px"><label>Password</label><input type="password" name="password" value="${DEMO_PASSWORD_V24}" autocomplete="current-password" required></div><button class="btn primary" style="width:100%;margin-top:18px">Login</button></form><div class="demo"><b>Username demo:</b><br>Admin: <b>admin</b> / demo123<br>PBJ: <b>pbj</b> / demo123<br>Kadivre: <b>kadivre</b> / demo123<br>Wakadivre: <b>wakadivre</b> / demo123<br>Kadep SUIKE: <b>kadep_suike</b> / demo123<br>Legal: <b>legal</b> / demo123<br>KPH: <b>kss_kph</b> / demo123</div></div></div></section>`};
 
-  users = function(){
-    if(!can("User Management")) return denied("Anda tidak memiliki akses User Management.");
-    return `<div class="split userManagementGrid">
-      <div class="card pad"><h2 style="margin-top:0">Tambah User</h2>
-        ${can("User Management","tambah")?`<form id="userForm"><div class="formGrid" style="grid-template-columns:1fr">
-          <div class="field"><label>Nama</label><input name="name" required></div>
-          <div class="field"><label>Username</label><input name="username" autocomplete="username" placeholder="contoh: pbj_area_1" required></div>
-          <div class="field"><label>Password</label><input name="password" value="demo123" required></div>
-          <div class="field"><label>Role</label><select name="role">${ROLES.map(r=>`<option>${esc(r)}</option>`).join("")}</select></div>
-          <div class="field"><label>Bidang</label><input name="bidang" required></div>
-          <button class="btn primary">Tambah User</button>
-        </div></form>`:`<div class="help warn">Role Anda tidak dapat menambah user.</div>`}
-        <div class="help" style="margin-top:14px">Edit dan hapus user tersedia dari kolom aksi. Admin aktif tidak bisa menghapus akun sendiri.</div>
-      </div>
-      <div class="tableWrap"><table><thead><tr><th>Nama</th><th>Username</th><th>Role</th><th>Bidang</th><th>Status</th><th>Aksi</th></tr></thead><tbody>
-        ${db.users.map(x=>`<tr>
-          <td data-label="Nama"><b>${esc(x.name)}</b></td>
-          <td data-label="Username"><span class="badge blue">${esc(x.username||"-")}</span></td>
-          <td data-label="Role">${esc(x.role)}</td>
-          <td data-label="Bidang">${esc(x.bidang)}</td>
-          <td data-label="Status"><span class="badge ${x.active?"green":"gray"}">${x.active?"Aktif":"Nonaktif"}</span></td>
-          <td data-label="Aksi">${userActionButtonsV21(x)}</td>
-        </tr>`).join("")}
-      </tbody></table></div>
+  bindLogin = function bindLogin(){
+    const form=document.getElementById("loginForm");
+    if(!form) return;
+    form.onsubmit=e=>{
+      e.preventDefault();
+      const x=fd(e.target), username=String(x.username||"").trim().toLowerCase();
+      const u=db.users.find(v=>v.active && String(v.username||"").toLowerCase()===username && v.password===String(x.password||""));
+      if(!u) return toast("Username atau password tidak sesuai.");
+      session={id:u.id,name:u.name,role:u.role,username:u.username};
+      try{__MPB_STORAGE.setItem(SESSION_KEY,JSON.stringify(session));}catch(e){}
+      state.page="dashboard";
+      render();
+    };
+  };
+
+  function phaseStartIndexV24(phaseIndex){let n=0;for(let i=0;i<phaseIndex;i++)n+=WORKFLOW[i].items.length;return n;}
+  function phaseForStepV24(stepId){return STEPS[Math.min(Math.max(0,stepId||0),STEPS.length-1)]?.phaseIndex || 0;}
+  function selectedPhaseV24(proc){return (state.flowPhaseByProc&&state.flowPhaseByProc[proc.id]!=null)?+state.flowPhaseByProc[proc.id]:phaseForStepV24(proc.currentStep);}
+  function selectedStepV24(proc){return (state.flowStepByProc&&state.flowStepByProc[proc.id]!=null)?+state.flowStepByProc[proc.id]:(proc.currentStep<STEPS.length?proc.currentStep:STEPS.length-1);}
+  function stepStatusV24(proc,stepId){
+    if(stepId < proc.currentStep || (proc.completedSteps||[]).includes(stepId)) return "approved";
+    if(stepId === proc.currentStep && proc.currentStep < STEPS.length) return "current";
+    return "locked";
+  }
+  function stepBadgeV24(proc,stepId){
+    const s=stepStatusV24(proc,stepId);
+    if(s==="approved") return `<span class="badge green">Approved</span>`;
+    if(s==="current") return `<span class="badge yellow">Belum Approved</span>`;
+    return `<span class="badge gray">Menunggu</span>`;
+  }
+  function currentGateV24(proc){try{return gate(proc,proc.currentStep);}catch(e){return {ok:false,msg:"Tahapan belum siap."};}}
+  function currentActionV24(proc){
+    if(proc.currentStep>=STEPS.length) return `<span class="badge green">Selesai</span>`;
+    const st=STEPS[proc.currentStep], g=currentGateV24(proc);
+    if(!isPic(st)) return `<span class="badge gray">PIC: ${esc(st.pic)}</span>`;
+    if(g.ok) return `<button type="button" class="btn primary small" data-approve="${proc.id}">Approve</button>`;
+    return `<button type="button" class="btn secondary small" data-approval-detail="${proc.id}">Lengkapi</button>`;
+  }
+  function approvalCompactListV24(rows){
+    if(!rows.length) return `<div class="card empty">Tidak ada approval yang menjadi PIC Anda saat ini.</div>`;
+    return `<div class="approvalCompactList">${rows.map(proc=>{const st=STEPS[proc.currentStep], ps=status(proc), du=due(proc);return `<div class="approvalCompactRow">
+      <button type="button" class="approvalNameClick" data-approval-detail="${proc.id}"><b>${esc(proc.nama)}</b><span>${esc(proc.bidang)} • ${esc(proc.jenisBarang)} • ${numID(proc.totalUsulan)} ${esc(proc.satuan)}</span></button>
+      <div class="approvalMeta"><span class="badge ${ps.color}">${esc(ps.text)}</span><span class="badge ${du.color}">${esc(du.text)}</span></div>
+      <div class="approvalStepNow"><small>Tahapan aktif</small><b>${st?esc(st.title):"Selesai"}</b><span>PIC: ${st?esc(st.pic):"-"}</span></div>
+      <div class="approvalCompactAction">${currentActionV24(proc)}</div>
+    </div>`}).join("")}</div>`;
+  }
+  approval = function approval(){
+    const apps=vis().filter(x=>x.currentStep<STEPS.length && isPic(STEPS[x.currentStep]));
+    return `<div class="head" style="margin-top:0"><div><h2>Antrian Approval Anda</h2><small>Daftar dibuat ringkas. Klik nama pengadaan untuk membuka detail approval.</small></div></div>
+      <div class="help ok"><b>Alur vertikal:</b> detail approval menampilkan fase dan tahapan dari atas ke bawah. Klik fase untuk membuka tahapan, lalu klik tahapan untuk melihat detail dan tombol approve.</div>
+      <br>${approvalCompactListV24(apps)}`;
+  };
+
+  function docsMiniV24(proc, stepId){
+    const docs=(typeof docsForStepV7==="function"?docsForStepV7(proc,stepId):(proc.documents||[]).filter(d=>+d.stepId===+stepId));
+    if(!docs.length) return `<div class="help warn">Belum ada dokumen/foto pada tahapan ini.</div>`;
+    return `<div class="miniDocList">${docs.map(d=>`<div><b>${esc(d.name||"Dokumen")}</b><span>${esc(d.file||d.camera||"-")}</span><small>${esc(d.by||"-")} • ${d.at?new Date(d.at).toLocaleString("id-ID"):"-"}</small></div>`).join("")}</div>`;
+  }
+  function approvalInfoV24(proc, stepId){
+    const ap=(proc.approvals||[]).find(a=>+a.stepId===+stepId);
+    if(!ap) return "";
+    return `<div class="approvalInfo"><b>Approved oleh ${esc(ap.approvedBy||"-")}</b><span>${esc(ap.approvedRole||ap.pic||"-")} • ${ap.approvedAt?new Date(ap.approvedAt).toLocaleString("id-ID"):"-"}</span></div>`;
+  }
+  function stepDetailV24(proc, stepId){
+    const step=STEPS[stepId];
+    if(!step) return `<div class="card empty">Tahapan tidak ditemukan.</div>`;
+    const statusStep=stepStatusV24(proc,stepId), isCurrent=statusStep==="current", g=isCurrent?currentGateV24(proc):{ok:false,msg:""};
+    const target=step.days==null?"Flexible":`${numID(step.days)} hari`;
+    return `<div class="approvalStepDetail vertical ${statusStep}">
+      <div class="stepDetailHead"><div><h3>${esc(step.title)}</h3><p>${esc(step.phase)} • PIC: <b>${esc(step.pic)}</b> • Target: <b>${esc(target)}</b></p></div>${stepBadgeV24(proc,stepId)}</div>
+      <div class="help"><b>Penjelasan:</b> ${esc(step.detail||"-")}</div>
+      ${statusStep==="approved"?approvalInfoV24(proc,stepId):""}
+      ${docsMiniV24(proc,stepId)}
+      ${isCurrent?`<div class="currentApprovalBox"><div class="help ${g.ok?"ok":"warn"}"><b>Status approval:</b> ${esc(g.msg)}</div>${uploadRequirementPanel(proc,stepId)}<div class="approvalStickyAction">${isPic(step)?`<button type="button" class="btn primary" data-approve="${proc.id}" ${g.ok?"":"disabled"}>Approve Tahapan Ini</button>`:`<span class="badge gray">Menunggu PIC ${esc(step.pic)}</span>`}</div></div>`:""}
     </div>`;
+  }
+  function phaseHeaderV24(proc, ph, idx, selected){
+    const start=phaseStartIndexV24(idx), end=start+ph.items.length-1;
+    const done=ph.items.filter((_,i)=>stepStatusV24(proc,start+i)==="approved").length;
+    const active=proc.currentStep>=start && proc.currentStep<=end;
+    const phaseStatus=done===ph.items.length?"approved":active?"current":"locked";
+    return `<button type="button" class="verticalPhaseHeader ${selected===idx?"active":""} ${phaseStatus}" data-flow-phase="${idx}" data-proc-id="${proc.id}">
+      <span class="phaseIndex">${idx+1}</span>
+      <span class="phaseText"><b>${esc(ph.phase)}</b><small>${numID(done)}/${numID(ph.items.length)} tahapan approved ${active?"• fase aktif":""}</small></span>
+      <span class="phaseChevron">${selected===idx?"−":"+"}</span>
+    </button>`;
+  }
+  function verticalStepItemV24(proc, it, stepId){
+    const st=stepStatusV24(proc,stepId), active=selectedStepV24(proc)===stepId;
+    const target=it.days==null?"Flexible":`${numID(it.days)} hari`;
+    return `<div class="verticalStepItem ${st} ${active?"active":""}">
+      <button type="button" class="verticalStepBtn" data-flow-step="${stepId}" data-proc-id="${proc.id}">
+        <span class="stepDot">${stepId+1}</span>
+        <span class="stepText"><b>${esc(it.title)}</b><small>PIC: ${esc(it.pic)} • Target: ${esc(target)}</small></span>
+        ${stepBadgeV24(proc,stepId)}
+      </button>
+      ${active?`<div class="verticalStepDetailSlot">${stepDetailV24(proc,stepId)}</div>`:""}
+    </div>`;
+  }
+  function verticalWorkflowV24(proc){
+    const selected=selectedPhaseV24(proc);
+    return `<section class="approvalVerticalWrap"><div class="head compactHead"><div><h2>Alur Approval Pengadaan</h2><small>Alur dibuat vertikal. Klik fase untuk membuka tahapan, lalu klik tahapan untuk melihat detail dan approve.</small></div></div>
+      <div class="approvalVerticalTimeline">${WORKFLOW.map((ph,idx)=>{
+        const open=selected===idx;
+        const start=phaseStartIndexV24(idx);
+        return `<div class="verticalPhase ${open?"open":"collapsed"}">${phaseHeaderV24(proc,ph,idx,selected)}${open?`<div class="verticalSteps">${ph.items.map((it,i)=>verticalStepItemV24(proc,it,start+i)).join("")}</div>`:""}</div>`;
+      }).join("")}</div></section>`;
+  }
+  function approvalSummaryV24(proc){
+    const curStep=STEPS[proc.currentStep], ps=status(proc), du=due(proc);
+    return `<div class="kpiRow approvalKpi"><div class="mini"><span>Status</span><b>${esc(ps.text)}</b></div><div class="mini"><span>Progress</span><b>${prog(proc)}%</b></div><div class="mini"><span>PIC Aktif</span><b style="font-size:18px">${curStep?esc(curStep.pic):"Selesai"}</b></div><div class="mini"><span>Tata Waktu</span><b style="font-size:18px">${esc(du.text)}</b></div></div>`;
+  }
+  detail = function detail(id){
+    const proc=db.procurements.find(p=>p.id===+id);
+    if(!proc) return;
+    proc.documents=proc.documents||[];
+    state.flowPhaseByProc=state.flowPhaseByProc||{};
+    state.flowStepByProc=state.flowStepByProc||{};
+    if(state.flowPhaseByProc[proc.id]==null) state.flowPhaseByProc[proc.id]=phaseForStepV24(proc.currentStep);
+    if(state.flowStepByProc[proc.id]==null) state.flowStepByProc[proc.id]=proc.currentStep<STEPS.length?proc.currentStep:STEPS.length-1;
+    document.getElementById("modalRoot").innerHTML=`<div class="modalBack"><div class="modal modalWide approvalDetailModal verticalApprovalModal"><div class="modalHead"><div><h2>${esc(proc.nama)}</h2><small>${esc(proc.bidang)} • ${esc(proc.jenisPengadaan)} • ${numID(proc.totalUsulan)} ${esc(proc.satuan)}</small></div><div class="tools"><button type="button" class="btn ghost small" id="closeModal">Tutup</button></div></div><div class="modalBody">${approvalSummaryV24(proc)}<div class="split approvalRuleSplit" style="margin-top:16px"><div class="help"><b>Aturan:</b> Approval dilakukan oleh PIC tahapan aktif. Jika belum lengkap, upload dokumen/foto terlebih dahulu.</div><div class="help ${proc.currentStep<STEPS.length&&isPic(STEPS[proc.currentStep])?"ok":"warn"}">${proc.currentStep<STEPS.length?`PIC aktif: <b>${esc(STEPS[proc.currentStep].pic)}</b>. Role login: <b>${esc(session.role)}</b>.`:"Pengadaan selesai."}</div></div>${verticalWorkflowV24(proc)}</div></div></div>`;
+    const close=document.getElementById("closeModal"); if(close) close.onclick=()=>document.getElementById("modalRoot").innerHTML="";
+    bindApprovalForms();
   };
 
-  saveUser = function(e){
-    e.preventDefault();
-    const x=fd(e.target);
-    const username=slugUsernameV21(x.username);
-    if(!uniqueUsernameV21(username,0)) return toast("Username sudah digunakan.");
-    db.users.push({
-      id:db.nextUserId++,
-      name:String(x.name||"").trim(),
-      username,
-      email:"",
-      password:x.password||"demo123",
-      role:x.role,
-      bidang:String(x.bidang||"").trim(),
-      active:true
+  function bindApprovalFlowV24(){
+    document.querySelectorAll("[data-flow-phase]").forEach(b=>b.onclick=()=>{
+      const pid=+b.dataset.procId, phase=+b.dataset.flowPhase;
+      state.flowPhaseByProc=state.flowPhaseByProc||{}; state.flowStepByProc=state.flowStepByProc||{};
+      state.flowPhaseByProc[pid]=phase;
+      const proc=db.procurements.find(p=>p.id===pid);
+      const start=phaseStartIndexV24(phase), end=start+(WORKFLOW[phase]?.items.length||1)-1;
+      const candidate=proc&&proc.currentStep>=start&&proc.currentStep<=end?proc.currentStep:start;
+      state.flowStepByProc[pid]=candidate;
+      detail(pid);
     });
-    save();
-    toast("User berhasil ditambahkan.");
-    render();
+    document.querySelectorAll("[data-flow-step]").forEach(b=>b.onclick=()=>{
+      const pid=+b.dataset.procId, step=+b.dataset.flowStep;
+      state.flowStepByProc=state.flowStepByProc||{}; state.flowPhaseByProc=state.flowPhaseByProc||{};
+      state.flowStepByProc[pid]=step; state.flowPhaseByProc[pid]=phaseForStepV24(step);
+      detail(pid);
+    });
+    document.querySelectorAll("[data-approval-detail]").forEach(b=>b.onclick=()=>detail(+b.dataset.approvalDetail));
+  }
+  const oldBindPageV24=bindPage;
+  bindPage=function bindPage(){
+    try{oldBindPageV24();}catch(e){}
+    bindApprovalFlowV24();
+    document.querySelectorAll("[data-approve]").forEach(b=>b.onclick=()=>approve(+b.dataset.approve));
   };
-
-  window.openUserEditV21 = function openUserEditV21(id){
-    const user=db.users.find(x=>x.id===+id);
-    if(!user) return toast("User tidak ditemukan.");
-    if(!can("User Management","edit")) return toast("Anda tidak memiliki akses edit user.");
-    document.getElementById("modalRoot").innerHTML=`<div class="modalBack"><div class="modal userEditModal"><div class="modalHead">
-      <div><h2>Edit User</h2><small>${esc(user.name)} • ${esc(user.username||"-")}</small></div>
-      <button type="button" class="btn ghost small" id="closeUserEdit">Tutup</button>
-    </div><div class="modalBody">
-      <form id="userEditForm" data-user-id="${user.id}">
-        <div class="formGrid">
-          <div class="field"><label>Nama</label><input name="name" required value="${esc(user.name)}"></div>
-          <div class="field"><label>Username</label><input name="username" required autocomplete="username" value="${esc(user.username||"")}"></div>
-          <div class="field"><label>Password</label><input name="password" value="${esc(user.password||"demo123")}"></div>
-          <div class="field"><label>Role</label><select name="role">${ROLES.map(r=>`<option ${user.role===r?"selected":""}>${esc(r)}</option>`).join("")}</select></div>
-          <div class="field"><label>Bidang</label><input name="bidang" required value="${esc(user.bidang||"")}"></div>
-          <div class="field"><label>Status</label><select name="active"><option value="true" ${user.active?"selected":""}>Aktif</option><option value="false" ${!user.active?"selected":""}>Nonaktif</option></select></div>
-          <div class="field full"><button class="btn primary">Simpan Perubahan</button></div>
-        </div>
-      </form>
-      <div class="help">Username akan dinormalisasi otomatis menjadi huruf kecil tanpa spasi.</div>
-    </div></div></div>`;
-    document.getElementById("closeUserEdit").onclick=()=>document.getElementById("modalRoot").innerHTML="";
-    document.getElementById("userEditForm").onsubmit=saveUserEditV21;
+  const oldBindApprovalFormsV24=bindApprovalForms;
+  bindApprovalForms=function bindApprovalForms(){
+    try{oldBindApprovalFormsV24();}catch(e){}
+    bindApprovalFlowV24();
+    document.querySelectorAll("[data-approve]").forEach(b=>b.onclick=()=>approve(+b.dataset.approve));
+    const doc=document.getElementById("docForm"); if(doc) doc.onsubmit=saveDocumentForm;
+    try{bindContractForm();bindMultiForms();bindFormattedInputs();}catch(e){}
   };
-
-  window.saveUserEditV21 = function saveUserEditV21(e){
-    e.preventDefault();
-    const id=+e.target.dataset.userId;
-    const user=db.users.find(x=>x.id===id);
-    if(!user) return toast("User tidak ditemukan.");
-    const x=fd(e.target);
-    const username=slugUsernameV21(x.username);
-    if(!uniqueUsernameV21(username,id)) return toast("Username sudah digunakan user lain.");
-    if(user.role==="Admin" && x.role!=="Admin" && adminCountV21()<=1) return toast("Minimal harus ada satu Admin aktif di sistem.");
-    user.name=String(x.name||"").trim();
-    user.username=username;
-    user.password=x.password||"demo123";
-    user.role=x.role;
-    user.bidang=String(x.bidang||"").trim();
-    user.active=String(x.active)==="true";
-    if(user.id===currentUserIdV21()){
-      session={id:user.id,name:user.name,role:user.role,username:user.username};
-      try{localStorage.setItem(SESSION_KEY,JSON.stringify(session));}catch(e){}
+  const prevApproveV24 = approve;
+  approve = function approve(id){
+    const proc=db.procurements.find(p=>p.id===+id);
+    const before=proc?proc.currentStep:null;
+    prevApproveV24(+id);
+    if(proc && proc.currentStep!==before){
+      state.flowPhaseByProc=state.flowPhaseByProc||{};
+      state.flowStepByProc=state.flowStepByProc||{};
+      state.flowPhaseByProc[proc.id]=proc.currentStep<STEPS.length?phaseForStepV24(proc.currentStep):phaseForStepV24(STEPS.length-1);
+      state.flowStepByProc[proc.id]=proc.currentStep<STEPS.length?proc.currentStep:STEPS.length-1;
+      if(document.getElementById("modalRoot")?.innerHTML) detail(proc.id); else render();
     }
-    save();
-    document.getElementById("modalRoot").innerHTML="";
-    toast("User berhasil diperbarui.");
-    render();
   };
+  try{render();}catch(e){console.error("Patch v24 vertical approval gagal", e);}
+})();
 
-  window.deleteUserV21 = function deleteUserV21(id){
-    const user=db.users.find(x=>x.id===+id);
-    if(!user) return toast("User tidak ditemukan.");
-    if(!canDeleteUserV21(user)) return toast("User ini tidak dapat dihapus.");
-    if(!confirm(`Hapus user ${user.name} (${user.username})?`)) return;
-    db.users=db.users.filter(x=>x.id!==user.id);
-    save();
-    toast("User berhasil dihapus.");
-    render();
-  };
-
-  function uploadStoreV21(){try{return JSON.parse(localStorage.getItem(UPLOAD_STORE_KEY_V21)||"{}");}catch(e){return {};}}
-  function saveCompressedUploadV21(name,dataUrl,meta){
-    try{
-      const store=uploadStoreV21();
-      store[name]={dataUrl,meta,at:new Date().toISOString()};
-      localStorage.setItem(UPLOAD_STORE_KEY_V21,JSON.stringify(store));
-      return true;
-    }catch(e){
-      console.warn("Upload compressed tidak tersimpan penuh, memakai metadata saja", e);
-      return false;
-    }
+/* === PATCH v25: fix minimize/collapse on vertical approval flow === */
+(function(){
+  function phaseForStepFixV25(stepId){
+    const safe=Math.min(Math.max(0,+stepId||0),STEPS.length-1);
+    return STEPS[safe]?.phaseIndex || 0;
   }
-  function canvasDataFromImageV21(img, fileName){
-    const max=MAX_UPLOAD_DIMENSION_V21;
-    const scale=Math.min(1,max/Math.max(img.naturalWidth||img.width,img.naturalHeight||img.height));
-    const w=Math.max(1,Math.round((img.naturalWidth||img.width)*scale));
-    const h=Math.max(1,Math.round((img.naturalHeight||img.height)*scale));
-    const canvas=document.createElement("canvas");
-    canvas.width=w; canvas.height=h;
-    const ctx=canvas.getContext("2d");
-    ctx.drawImage(img,0,0,w,h);
-    const dataUrl=canvas.toDataURL("image/jpeg",JPEG_QUALITY_V21);
-    const ext=fileName && fileName.toLowerCase().match(/\.(jpg|jpeg)$/) ? fileName.replace(/\.(jpg|jpeg)$/i,".jpg") : `${(fileName||"upload").replace(/\.[^.]+$/,"")}.jpg`;
-    return {dataUrl,fileName:`compressed-${Date.now()}-${ext}`,width:w,height:h};
+  function getProcFromFlowV25(){
+    const node=document.querySelector('[data-flow-phase][data-proc-id], [data-flow-step][data-proc-id]');
+    if(!node) return null;
+    return db.procurements.find(p=>p.id===+node.dataset.procId) || null;
   }
-  function readFileAsDataUrlV21(file){
-    return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||""));reader.onerror=reject;reader.readAsDataURL(file);});
-  }
-  function loadImageV21(dataUrl){
-    return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=dataUrl;});
-  }
-  async function compressImageFileV21(file){
-    const raw=await readFileAsDataUrlV21(file);
-    const img=await loadImageV21(raw);
-    const out=canvasDataFromImageV21(img,file.name||"upload.jpg");
-    return {...out,originalBytes:file.size||0,compressedBytes:Math.round(out.dataUrl.length*0.75)};
-  }
-  function showUploadNoteV21(input, text, cls="ok"){
-    let note=input.parentElement?.querySelector(".uploadCompressNote");
-    if(!note){note=document.createElement("small");note.className="uploadCompressNote";input.parentElement?.appendChild(note);}
-    if(note){note.className=`uploadCompressNote ${cls}`;note.textContent=text;}
-  }
-  async function handleFileCompressionV21(input){
-    const file=input.files?.[0];
-    if(!file) return;
-    input.dataset.originalName=file.name;
-    input.dataset.originalSize=String(file.size||0);
-    if(file.type && file.type.startsWith("image/")){
-      input.dataset.compressing="true";
-      showUploadNoteV21(input,"Mengompres gambar...","warn");
-      try{
-        const out=await compressImageFileV21(file);
-        const saved=saveCompressedUploadV21(out.fileName,out.dataUrl,{originalName:file.name,originalBytes:out.originalBytes,compressedBytes:out.compressedBytes,width:out.width,height:out.height});
-        input.dataset.compressedName=out.fileName;
-        input.dataset.compressedSize=String(out.compressedBytes);
-        input.dataset.compressing="false";
-        const before=Math.max(1,Math.round((file.size||0)/1024));
-        const after=Math.max(1,Math.round(out.compressedBytes/1024));
-        showUploadNoteV21(input,`Gambar dikompres: ${before} KB → ${after} KB${saved?"":" (metadata saja karena storage penuh)"}.`,saved?"ok":"warn");
-        toast("File gambar berhasil dikompres sebelum disimpan.");
-      }catch(err){
-        console.warn("Kompresi gagal",err);
-        input.dataset.compressedName=file.name;
-        input.dataset.compressing="false";
-        showUploadNoteV21(input,"Kompresi gagal, memakai nama file asli.","warn");
-      }
+  function ensureFlowToolsV25(){
+    const proc=getProcFromFlowV25();
+    const head=document.querySelector('.approvalVerticalWrap .compactHead');
+    if(!proc || !head) return;
+    let tools=head.querySelector('.flowToolsV25');
+    if(!tools){
+      tools=document.createElement('div');
+      tools.className='tools flowToolsV25';
+      tools.innerHTML=`<button type="button" class="btn ghost small" data-flow-collapse-all="${proc.id}">Minimize Semua</button><button type="button" class="btn ghost small" data-flow-open-active="${proc.id}">Buka Fase Aktif</button>`;
+      head.appendChild(tools);
     }else{
-      input.dataset.compressedName=file.name;
-      input.dataset.compressing="false";
-      showUploadNoteV21(input,"File non-gambar disimpan sebagai metadata nama file agar ukuran aplikasi tetap ringan.","ok");
+      tools.querySelectorAll('[data-flow-collapse-all],[data-flow-open-active]').forEach(b=>{
+        b.dataset.flowCollapseAll=proc.id;
+        b.dataset.flowOpenActive=proc.id;
+      });
     }
   }
-  function compressedFileLabelV21(input){
-    const el=typeof input==="string"?document.querySelector(input):input;
-    if(!el) return "";
-    if(el.dataset?.compressedName) return el.dataset.compressedName;
-    return fileLabel(el);
+  function bindApprovalFlowMinimizeV25(){
+    ensureFlowToolsV25();
+
+    document.querySelectorAll('[data-flow-phase]').forEach(btn=>{
+      btn.onclick=()=>{
+        const pid=+btn.dataset.procId;
+        const phase=+btn.dataset.flowPhase;
+        const proc=db.procurements.find(p=>p.id===pid);
+        if(!proc) return;
+
+        state.flowPhaseByProc=state.flowPhaseByProc||{};
+        state.flowStepByProc=state.flowStepByProc||{};
+
+        const current=+state.flowPhaseByProc[pid];
+        const isOpen=current===phase;
+
+        if(isOpen){
+          // Perbaikan utama: klik fase yang sedang terbuka sekarang benar-benar menutup/minimize fase tersebut.
+          state.flowPhaseByProc[pid] = -1;
+        }else{
+          state.flowPhaseByProc[pid] = phase;
+          const start=WORKFLOW.slice(0,phase).reduce((sum,item)=>sum+item.items.length,0);
+          const end=start+(WORKFLOW[phase]?.items.length||1)-1;
+          const candidate=proc.currentStep>=start && proc.currentStep<=end ? proc.currentStep : start;
+          state.flowStepByProc[pid]=candidate;
+        }
+        detail(pid);
+      };
+    });
+
+    document.querySelectorAll('[data-flow-step]').forEach(btn=>{
+      btn.onclick=()=>{
+        const pid=+btn.dataset.procId;
+        const step=+btn.dataset.flowStep;
+        state.flowStepByProc=state.flowStepByProc||{};
+        state.flowPhaseByProc=state.flowPhaseByProc||{};
+        state.flowStepByProc[pid]=step;
+        state.flowPhaseByProc[pid]=phaseForStepFixV25(step);
+        detail(pid);
+      };
+    });
+
+    document.querySelectorAll('[data-flow-collapse-all]').forEach(btn=>{
+      btn.onclick=()=>{
+        const pid=+btn.dataset.flowCollapseAll;
+        state.flowPhaseByProc=state.flowPhaseByProc||{};
+        state.flowPhaseByProc[pid]=-1;
+        detail(pid);
+      };
+    });
+
+    document.querySelectorAll('[data-flow-open-active]').forEach(btn=>{
+      btn.onclick=()=>{
+        const pid=+btn.dataset.flowOpenActive;
+        const proc=db.procurements.find(p=>p.id===pid);
+        if(!proc) return;
+        state.flowPhaseByProc=state.flowPhaseByProc||{};
+        state.flowStepByProc=state.flowStepByProc||{};
+        const activeStep=proc.currentStep<STEPS.length?proc.currentStep:STEPS.length-1;
+        state.flowPhaseByProc[pid]=phaseForStepFixV25(activeStep);
+        state.flowStepByProc[pid]=activeStep;
+        detail(pid);
+      };
+    });
+
+    document.querySelectorAll('[data-approval-detail]').forEach(btn=>{
+      btn.onclick=()=>detail(+btn.dataset.approvalDetail);
+    });
+
+    document.querySelectorAll('[data-approve]').forEach(btn=>{
+      btn.onclick=()=>approve(+btn.dataset.approve);
+    });
   }
-  document.addEventListener("change",e=>{
-    const input=e.target.closest?.('input[type="file"]');
-    if(!input) return;
-    handleFileCompressionV21(input);
-  });
 
-  fileInputsForRow = function(row){
-    const file=compressedFileLabelV21(row.querySelector('[name="dpFile"]'));
-    const camera=row.querySelector('[name="dpCameraName"]')?.value || "";
-    return {dpFile:file,dpCamera:camera,dpUnified:[file,camera].filter(Boolean).join(" | ")};
-  };
-  fileInputsForForm = function(form){
-    const file=compressedFileLabelV21(form.querySelector('[name="fileUpload"]'));
-    const camera=form.querySelector('[name="cameraUploadName"]')?.value || "";
-    return {file,camera,unified:[file,camera].filter(Boolean).join(" | ")};
+  const prevBindPageV25=bindPage;
+  bindPage=function bindPage(){
+    try{prevBindPageV25();}catch(e){console.warn(e)}
+    bindApprovalFlowMinimizeV25();
   };
 
-  saveCameraCaptureV8 = function(name,dataUrl){
-    saveCompressedUploadV21(name,dataUrl,{source:"camera",compressedBytes:Math.round(String(dataUrl||"").length*0.75)});
+  const prevBindApprovalFormsV25=bindApprovalForms;
+  bindApprovalForms=function bindApprovalForms(){
+    try{prevBindApprovalFormsV25();}catch(e){console.warn(e)}
+    bindApprovalFlowMinimizeV25();
+    const doc=document.getElementById('docForm');
+    if(doc) doc.onsubmit=saveDocumentForm;
   };
-  openFallbackCameraInputV8 = function(scope, hiddenName){
-    const input=document.createElement("input");
-    input.type="file"; input.accept="image/*"; input.capture="environment";
-    input.onchange=async()=>{
-      const file=input.files?.[0];
-      if(!file) return;
-      let out;
-      try{out=await compressImageFileV21(file);}catch(e){
-        const raw=await readFileAsDataUrlV21(file);
-        out={fileName:`camera-${Date.now()}-${file.name||"foto.jpg"}`,dataUrl:raw,originalBytes:file.size||0,compressedBytes:Math.round(raw.length*0.75)};
-      }
-      saveCompressedUploadV21(out.fileName,out.dataUrl,{source:"camera-fallback",originalName:file.name,originalBytes:out.originalBytes,compressedBytes:out.compressedBytes,width:out.width,height:out.height});
-      previewCameraResultV8(scope,hiddenName,out.fileName,out.dataUrl);
-      toast("Foto berhasil diambil dan dikompres.");
-    };
-    input.click();
+
+  const prevDetailV25=detail;
+  detail=function detail(id){
+    prevDetailV25(id);
+    bindApprovalFlowMinimizeV25();
   };
-  openCameraModalV8 = async function(scope, hiddenName){
-    if(!navigator.mediaDevices?.getUserMedia){openFallbackCameraInputV8(scope,hiddenName);return;}
-    let stream;
-    const modal=document.createElement("div");
-    modal.className="cameraModalBackdrop";
-    modal.innerHTML=`<div class="cameraModal">
-      <div class="cameraModalHead"><b>Ambil Foto Langsung dari Kamera</b><button type="button" class="btn ghost small" data-close-camera>Tutup</button></div>
-      <video autoplay playsinline></video>
-      <canvas class="hidden"></canvas>
-      <div class="cameraActions"><button type="button" class="btn primary" data-capture-photo>Ambil Foto & Kompres</button><button type="button" class="btn ghost" data-switch-fallback>Pilih dari Galeri/File</button></div>
-      <small>Foto akan dikompres otomatis agar ukuran data tidak terlalu besar.</small>
+
+  try{window.bindPage=bindPage;window.bindApprovalForms=bindApprovalForms;window.detail=detail;render();}catch(e){console.error('Patch v25 minimize approval gagal', e);}
+})();
+
+/* === PATCH v26: robust collapse/minimize approval flow + mobile sidebar menu === */
+(function(){
+  function isMobileV26(){
+    return window.matchMedia && window.matchMedia('(max-width: 860px)').matches;
+  }
+  function phaseForStepV26(stepId){
+    const safe=Math.min(Math.max(0,+stepId||0),STEPS.length-1);
+    return STEPS[safe]?.phaseIndex || 0;
+  }
+  function phaseStartIndexV26(phaseIndex){
+    let n=0;
+    for(let i=0;i<phaseIndex;i++) n += (WORKFLOW[i]?.items?.length || 0);
+    return n;
+  }
+  function currentProcInApprovalModalV26(){
+    const modal=document.querySelector('.approvalDetailModal');
+    const node=modal?.querySelector('[data-flow-phase][data-proc-id], [data-flow-step][data-proc-id]');
+    if(!node) return null;
+    return db.procurements.find(p=>p.id===+node.dataset.procId) || null;
+  }
+  function ensureFlowToolsV26(){
+    const proc=currentProcInApprovalModalV26();
+    const head=document.querySelector('.approvalVerticalWrap .compactHead');
+    if(!proc || !head) return;
+
+    // Remove older v25 buttons because they could inherit both data attributes after re-render.
+    head.querySelectorAll('.flowToolsV25').forEach(n=>n.remove());
+
+    let tools=head.querySelector('.flowToolsV26');
+    if(!tools){
+      tools=document.createElement('div');
+      tools.className='tools flowToolsV26';
+      head.appendChild(tools);
+    }
+    tools.innerHTML = `
+      <button type="button" class="btn ghost small" data-flow-action="collapse-all" data-proc-id="${proc.id}">Minimize Semua</button>
+      <button type="button" class="btn ghost small" data-flow-action="open-active" data-proc-id="${proc.id}">Buka Fase Aktif</button>
+    `;
+  }
+  function openPhaseV26(proc, phase){
+    state.flowPhaseByProc=state.flowPhaseByProc||{};
+    state.flowStepByProc=state.flowStepByProc||{};
+    state.flowPhaseByProc[proc.id]=phase;
+    const start=phaseStartIndexV26(phase);
+    const end=start+(WORKFLOW[phase]?.items?.length || 1)-1;
+    const selected=+state.flowStepByProc[proc.id];
+    const candidate=selected>=start && selected<=end ? selected : (proc.currentStep>=start && proc.currentStep<=end ? proc.currentStep : start);
+    state.flowStepByProc[proc.id]=candidate;
+  }
+  function collapseAllV26(pid){
+    state.flowPhaseByProc=state.flowPhaseByProc||{};
+    state.flowPhaseByProc[pid] = -1;
+  }
+  function bindApprovalFlowMinimizeV26(){
+    ensureFlowToolsV26();
+
+    document.querySelectorAll('.approvalDetailModal [data-flow-phase]').forEach(btn=>{
+      btn.onclick=()=>{
+        const pid=+btn.dataset.procId;
+        const phase=+btn.dataset.flowPhase;
+        const proc=db.procurements.find(p=>p.id===pid);
+        if(!proc) return;
+        state.flowPhaseByProc=state.flowPhaseByProc||{};
+        const current=+state.flowPhaseByProc[pid];
+        if(current===phase){
+          collapseAllV26(pid);
+        }else{
+          openPhaseV26(proc, phase);
+        }
+        detail(pid);
+      };
+    });
+
+    document.querySelectorAll('.approvalDetailModal [data-flow-step]').forEach(btn=>{
+      btn.onclick=()=>{
+        const pid=+btn.dataset.procId;
+        const step=+btn.dataset.flowStep;
+        state.flowStepByProc=state.flowStepByProc||{};
+        state.flowPhaseByProc=state.flowPhaseByProc||{};
+        state.flowStepByProc[pid]=step;
+        state.flowPhaseByProc[pid]=phaseForStepV26(step);
+        detail(pid);
+      };
+    });
+
+    document.querySelectorAll('.approvalDetailModal [data-flow-action]').forEach(btn=>{
+      btn.onclick=()=>{
+        const pid=+btn.dataset.procId;
+        const proc=db.procurements.find(p=>p.id===pid);
+        if(!proc) return;
+        const action=btn.dataset.flowAction;
+        if(action==='collapse-all'){
+          collapseAllV26(pid);
+        }
+        if(action==='open-active'){
+          const activeStep=proc.currentStep<STEPS.length ? proc.currentStep : STEPS.length-1;
+          state.flowStepByProc=state.flowStepByProc||{};
+          state.flowPhaseByProc=state.flowPhaseByProc||{};
+          state.flowStepByProc[pid]=activeStep;
+          state.flowPhaseByProc[pid]=phaseForStepV26(activeStep);
+        }
+        detail(pid);
+      };
+    });
+
+    document.querySelectorAll('[data-approval-detail]').forEach(btn=>{
+      btn.onclick=()=>detail(+btn.dataset.approvalDetail);
+    });
+    document.querySelectorAll('.approvalDetailModal [data-approve]').forEach(btn=>{
+      btn.onclick=()=>approve(+btn.dataset.approve);
+    });
+  }
+
+  // Replace shell with responsive desktop-collapse + mobile off-canvas sidebar.
+  shell=function shell(){
+    const u=cur();
+    state.sidebarCollapsed=!!state.sidebarCollapsed;
+    state.mobileSidebarOpen=!!state.mobileSidebarOpen;
+    const groups=[
+      ['Utama',[nav('dashboard','Dashboard','Dashboard','⌂'),nav('procurements','Data Pengadaan','Data Pengadaan','▦'),nav('input','Input Pengadaan','Input Pengadaan','＋'),nav('approval','Approval','Approval','✓')]],
+      ['Operasional',[nav('masa','Masa Pelaksanaan','Masa Pelaksanaan','◷'),nav('allocation','Alokasi KPH','Alokasi KPH','↦'),nav('shipping','Pengiriman','Pengiriman Barang','⇢'),nav('receiving','Penerimaan','Penerimaan Barang','⇠')]],
+      ['Monitoring',[nav('monitoring','Monitoring Barang','Monitoring Barang','◉')]],
+      ['Admin',[nav('roles','Role & Permission','Role & Permission','⚙'),nav('users','User Management','User Management','☷'),nav('branding','Branding','Branding','✦')]]
+    ];
+    return `<div class="shell ${state.sidebarCollapsed?'sidebarCollapsed':''} ${state.mobileSidebarOpen?'mobileSidebarOpen':''}">
+      <button type="button" class="sidebarBackdrop" data-sidebar-close aria-label="Tutup menu"></button>
+      <aside class="sidebar">
+        <div class="brand"><img src="${esc(CONFIG.logoUrl)}"><div><b>${esc(CONFIG.shortName)}</b><span>${esc(CONFIG.appName)}</span></div><button type="button" class="btn ghost small sidebarHide" data-sidebar-toggle title="Minimize menu">${state.sidebarCollapsed?'›':'‹'}</button></div>
+        ${groups.map(([t,items])=>{let v=items.filter(i=>can(i.module));return v.length?`<div><div class="navTitle">${t}</div>${v.map(i=>`<button class="navBtn ${state.page===i.page?'active':''}" data-nav="${i.page}" title="${esc(i.label)}"><span class="ico">${i.ico}</span><span class="navText">${i.label}</span></button>`).join('')}</div>`:''}).join('')}
+        <div class="sideUser"><b>${esc(u.name)}</b><span>${esc(u.role)} • ${esc(u.bidang)}</span></div>
+      </aside>
+      <main class="main">
+        <div class="topbar"><button type="button" class="btn ghost small menuToggle" data-sidebar-toggle>☰ Menu</button><div class="topbarTitle"><div class="kicker">${esc(CONFIG.organizationName)} Procurement System</div><h1>${title()}</h1></div><div class="userChip"><div class="avatar">${esc(u.name[0])}</div><div><b>${esc(u.name)}</b><span>${esc(u.role)}</span></div><button id="logout" class="btn ghost small">Logout</button></div></div>
+        <div id="content"></div><div id="modalRoot"></div>
+      </main>
     </div>`;
-    document.body.appendChild(modal);
-    const video=modal.querySelector("video"),canvas=modal.querySelector("canvas");
-    const close=()=>{try{stream?.getTracks()?.forEach(t=>t.stop());}catch(e){} modal.remove();};
-    modal.querySelector("[data-close-camera]").onclick=close;
-    modal.querySelector("[data-switch-fallback]").onclick=()=>{close();openFallbackCameraInputV8(scope,hiddenName);};
-    try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false});video.srcObject=stream;}
-    catch(err){close();toast("Kamera tidak bisa dibuka. Browser membuka pilihan file/foto.");openFallbackCameraInputV8(scope,hiddenName);return;}
-    modal.querySelector("[data-capture-photo]").onclick=()=>{
-      const vw=video.videoWidth||1280,vh=video.videoHeight||720;
-      const scale=Math.min(1,MAX_UPLOAD_DIMENSION_V21/Math.max(vw,vh));
-      canvas.width=Math.round(vw*scale);canvas.height=Math.round(vh*scale);
-      canvas.getContext("2d").drawImage(video,0,0,canvas.width,canvas.height);
-      const dataUrl=canvas.toDataURL("image/jpeg",JPEG_QUALITY_V21);
-      const name=`camera-compressed-${new Date().toISOString().replace(/[:.]/g,"-")}.jpg`;
-      saveCompressedUploadV21(name,dataUrl,{source:"camera",compressedBytes:Math.round(dataUrl.length*0.75),width:canvas.width,height:canvas.height});
-      previewCameraResultV8(scope,hiddenName,name,dataUrl);
-      close();
-      toast("Foto kamera berhasil dikompres dan masuk ke Upload DP / File Dokumen.");
-    };
   };
 
-  function bidangDetailTableV21(rows){
-    if(!rows.length) return `<div class="empty">Belum ada data pengadaan pada bidang ini.</div>`;
-    return `<table><thead><tr><th>Pengadaan</th><th>Jenis Barang</th><th>Total Usulan</th><th>Terkirim</th><th>Diterima</th><th>Status</th><th>Aksi</th></tr></thead><tbody>
-      ${rows.map(x=>`<tr>
-        <td data-label="Pengadaan"><b>${esc(x.nama)}</b><br><small>${esc(x.jenisPengadaan)}</small></td>
-        <td data-label="Jenis Barang">${esc(x.jenisBarang)}</td>
-        <td data-label="Total Usulan">${numID(x.totalUsulan)} ${esc(x.satuan)}</td>
-        <td data-label="Terkirim">${numID(shipTotal(x))} ${esc(x.satuan)}</td>
-        <td data-label="Diterima">${numID(recTotal(x))} ${esc(x.satuan)}</td>
-        <td data-label="Status"><span class="badge ${recTotal(x)>=x.totalUsulan?"green":"yellow"}">${recTotal(x)>=x.totalUsulan?"Diterima 100%":"Proses"}</span></td>
-        <td data-label="Aksi"><button type="button" class="btn primary small" data-detail="${x.id}">Detail</button></td>
-      </tr>`).join("")}
-    </tbody></table>`;
-  }
-  window.openBidangDetailV21 = function openBidangDetailV21(bidang){
-    const rows=vis().filter(x=>x.bidang===bidang);
-    const us=rows.reduce((a,x)=>a+(+x.totalUsulan||0),0),sh=rows.reduce((a,x)=>a+shipTotal(x),0),re=rows.reduce((a,x)=>a+recTotal(x),0);
-    document.getElementById("modalRoot").innerHTML=`<div class="modalBack"><div class="modal"><div class="modalHead"><div><h2>Detail Pengadaan Bidang ${esc(bidang)}</h2><small>${numID(rows.length)} pengadaan • Usulan ${numID(us)} • Terkirim ${numID(sh)} • Diterima ${numID(re)}</small></div><button type="button" class="btn ghost small" id="closeBidangDetail">Tutup</button></div><div class="modalBody"><div class="tableWrap detailMonitoringTable">${bidangDetailTableV21(rows)}</div></div></div></div>`;
-    document.getElementById("closeBidangDetail").onclick=()=>document.getElementById("modalRoot").innerHTML="";
-    document.querySelectorAll("#modalRoot [data-detail]").forEach(b=>b.onclick=()=>detail(+b.dataset.detail));
+  bindShell=function bindShell(){
+    document.querySelectorAll('[data-nav]').forEach(btn=>{
+      btn.onclick=()=>{
+        state.page=btn.dataset.nav;
+        state.mobileSidebarOpen=false;
+        render();
+      };
+    });
+    document.querySelectorAll('[data-sidebar-toggle]').forEach(btn=>{
+      btn.onclick=()=>{
+        if(isMobileV26()){
+          state.mobileSidebarOpen=!state.mobileSidebarOpen;
+        }else{
+          state.sidebarCollapsed=!state.sidebarCollapsed;
+        }
+        render();
+      };
+    });
+    document.querySelectorAll('[data-sidebar-close]').forEach(btn=>{
+      btn.onclick=()=>{state.mobileSidebarOpen=false;render();};
+    });
+    const logout=document.getElementById('logout');
+    if(logout){
+      logout.onclick=()=>{__MPB_STORAGE.removeItem(SESSION_KEY);session=null;state.mobileSidebarOpen=false;render();};
+    }
   };
 
-  dashboard = function dashboard(){
-    let r=vis(),done=r.filter(x=>x.currentStep>=STEPS.length).length,run=r.filter(x=>x.currentStep<STEPS.length).length,need=r.filter(x=>isPic(STEPS[x.currentStep])).length,bc={};
-    r.forEach(x=>{bc[x.bidang]=(bc[x.bidang]||0)+1;});
-    return `<div class="grid cards">${stat("all","Total Pengadaan",r.length,"Seluruh pengadaan yang dapat Anda akses")}${stat("done","Selesai",done,"Pengadaan selesai")}${stat("running","Sedang Berlangsung",run,"Klik untuk melihat proses berjalan")}${stat("need","Perlu Approval",need,"Tahapan sesuai PIC login")}</div>
-      <div class="split"><div class="card pad"><div class="head" style="margin-top:0"><h2>Pengadaan per Bidang</h2><small>Klik bidang untuk melihat detail pengadaan.</small></div>
-        ${Object.entries(bc).map(([b,n])=>`<button type="button" class="bidangRowClick" data-bidang-detail="${esc(b)}"><div><b>${esc(b)}</b><br><small>${numID(n)} pengadaan</small></div><span class="badge blue">${numID(n)}</span></button>`).join("")||`<div class="empty">Belum ada data.</div>`}
-      </div>
-      <div class="card pad"><div class="head" style="margin-top:0"><h2>Monitoring Barang</h2><button class="btn ghost small" data-go="monitoring">Buka Tab Monitoring Barang</button></div>${summary()}<div class="help ok" style="margin-top:14px">Klik Total Usulan, Total Terkirim, atau Total Diterima untuk membuka detail data.</div></div></div>
-      <div class="head"><h2>Daftar Pengadaan</h2><div class="tools">${canInput()?`<button class="btn primary small" data-go="input">+ Input Pengadaan</button>`:""}<button class="btn ghost small" data-reset>Reset Data Demo</button></div></div>${procTable(filtered())}`;
+  const prevBindPageV26=bindPage;
+  bindPage=function bindPage(){
+    try{prevBindPageV26();}catch(e){console.warn(e);}
+    bindApprovalFlowMinimizeV26();
   };
 
-  const oldBindPageV21 = bindPage;
-  bindPage = function bindPage(){
-    oldBindPageV21();
-    const uf=document.getElementById("userForm"); if(uf) uf.onsubmit=saveUser;
-    document.querySelectorAll("[data-edit-user]").forEach(b=>b.onclick=()=>openUserEditV21(+b.dataset.editUser));
-    document.querySelectorAll("[data-delete-user]").forEach(b=>b.onclick=()=>deleteUserV21(+b.dataset.deleteUser));
-    document.querySelectorAll("[data-bidang-detail]").forEach(b=>b.onclick=()=>openBidangDetailV21(b.dataset.bidangDetail));
+  const prevBindApprovalFormsV26=bindApprovalForms;
+  bindApprovalForms=function bindApprovalForms(){
+    try{prevBindApprovalFormsV26();}catch(e){console.warn(e);}
+    bindApprovalFlowMinimizeV26();
+    const doc=document.getElementById('docForm');
+    if(doc) doc.onsubmit=saveDocumentForm;
   };
+
+  const prevDetailV26=detail;
+  detail=function detail(id){
+    prevDetailV26(id);
+    bindApprovalFlowMinimizeV26();
+  };
+
   try{
-    window.users=users; window.saveUser=saveUser; window.dashboard=dashboard; window.bindPage=bindPage;
-    if(state?.page) render();
-  }catch(e){console.error("Patch v21 gagal", e);}
+    window.shell=shell; window.bindShell=bindShell; window.bindPage=bindPage; window.bindApprovalForms=bindApprovalForms; window.detail=detail;
+    render();
+  }catch(e){console.error('Patch v26 minimize/menu mobile gagal', e);}
+})();
+
+/* === PATCH v27: simplified input, compact approval, operational data flow, working-day SLA === */
+(function(){
+  const DEFAULT_HOLIDAYS_V27 = [
+    "2026-01-01","2026-02-16","2026-02-17","2026-03-19","2026-03-20","2026-03-21",
+    "2026-05-01","2026-05-14","2026-05-27","2026-06-01","2026-06-17","2026-08-17","2026-12-25"
+  ];
+  db.holidays = Array.isArray(db.holidays) && db.holidays.length ? db.holidays : DEFAULT_HOLIDAYS_V27;
+  (db.procurements||[]).forEach(proc=>{
+    proc.documents = proc.documents || [];
+    proc.allocations = proc.allocations || [];
+    proc.shipments = proc.shipments || [];
+    proc.receipts = proc.receipts || [];
+    proc.contract = proc.contract || {noPks:"",tanggalPks:"",tanggalMulai:"",tanggalAkhir:""};
+    if(proc.contract.tanggalPerjanjian) delete proc.contract.tanggalPerjanjian;
+    if(proc.totalUsulan==null) proc.totalUsulan=0;
+    if(!proc.satuan) proc.satuan="";
+    if(!proc.jenisBarang) proc.jenisBarang="";
+  });
+  try{save();}catch(e){}
+
+  function safeISO(v){
+    if(!v) return "";
+    if(/^\d{4}-\d{2}-\d{2}/.test(String(v))) return String(v).slice(0,10);
+    if(typeof idToISO==="function") return idToISO(v);
+    return "";
+  }
+  function dateObjV27(v){return new Date(`${safeISO(v)}T00:00:00`)}
+  function nextISOV27(v,delta=1){const d=dateObjV27(v);d.setDate(d.getDate()+delta);return d.toISOString().slice(0,10)}
+  function isHolidayV27(v){return (db.holidays||DEFAULT_HOLIDAYS_V27).includes(safeISO(v));}
+  function isWorkDayV27(v){const d=dateObjV27(v),day=d.getDay();return day!==0&&day!==6&&!isHolidayV27(v);}
+  function calendarDiffV27(a,b){return Math.floor((dateObjV27(b)-dateObjV27(a))/864e5);}
+  function workDaysInclusiveV27(start,end){
+    start=safeISO(start); end=safeISO(end); if(!start||!end) return 0;
+    if(calendarDiffV27(start,end)<0) return -1;
+    let n=0, cur=start;
+    while(calendarDiffV27(cur,end)<=0){if(isWorkDayV27(cur)) n++; cur=nextISOV27(cur,1);}
+    return n;
+  }
+  function workDaysElapsedV27(start,end){
+    start=safeISO(start); end=safeISO(end); if(!start||!end) return 0;
+    if(calendarDiffV27(start,end)<0) return -1;
+    let n=0, cur=nextISOV27(start,1);
+    while(calendarDiffV27(cur,end)<=0){if(isWorkDayV27(cur)) n++; cur=nextISOV27(cur,1);}
+    return n;
+  }
+  function totalUsulanV27(proc){
+    const stored=Number(proc.totalUsulan||0);
+    if(stored>0) return stored;
+    return (proc.allocations||[]).reduce((a,b)=>a+(Number(b.volume)||0),0);
+  }
+  function namaBarangListV27(proc){
+    const names=[...(proc.allocations||[]).map(a=>a.jenisBarang||a.namaBarang), proc.jenisBarang].filter(Boolean);
+    return [...new Set(names)].join(", ") || "-";
+  }
+  function ensureContractNoPksV27(proc){return proc?.contract?.noPks || "";}
+  function noPksReadonlyHelpV27(proc){return ensureContractNoPksV27(proc)?"Otomatis dari Masa Pelaksanaan":"Isi No PKS terlebih dahulu di Masa Pelaksanaan";}
+  function hasModalOpenV27(){return !!document.querySelector(".modalBack");}
+
+  // Tata waktu dihitung berdasarkan hari efektif kerja, bukan hari kalender.
+  due = function due(proc,id=proc.currentStep){
+    const st=STEPS[id];
+    if(!st) return {text:"Selesai",color:"green"};
+    const elapsed=Math.max(0,workDaysElapsedV27(proc.createdAt,today()));
+    const targetBefore=before(id);
+    if(st.days===null) return {text:`Flexible • ${numID(Math.max(0,elapsed-targetBefore))} hari kerja berjalan`,color:"blue"};
+    const remain=targetBefore+Number(st.days||0)-elapsed;
+    if(remain<0) return {text:`Lewat ${numID(Math.abs(remain))} hari kerja`,color:"red"};
+    if(remain<=1) return {text:`Sisa ${numID(remain)} hari kerja`,color:"yellow"};
+    return {text:`Sisa ${numID(remain)} hari kerja`,color:"green"};
+  };
+  contractDuration = function contractDuration(proc){
+    const c=proc?.contract||{};
+    if(!c.tanggalMulai||!c.tanggalAkhir) return 0;
+    const n=workDaysInclusiveV27(c.tanggalMulai,c.tanggalAkhir);
+    return Number.isFinite(n)?Math.max(0,n):0;
+  };
+  contractElapsed = function contractElapsed(proc){
+    const c=proc?.contract||{};
+    if(!c.tanggalMulai) return 0;
+    const end=today()<c.tanggalAkhir?today():c.tanggalAkhir;
+    return Math.max(0,workDaysInclusiveV27(c.tanggalMulai,end));
+  };
+  contractStatus = function contractStatus(proc){
+    const c=proc?.contract||{};
+    if(!c.tanggalMulai||!c.tanggalAkhir) return {text:"Isi tanggal mulai dan akhir kontrak",color:"yellow"};
+    const dur=contractDuration(proc);
+    if(today()<c.tanggalMulai){const n=workDaysInclusiveV27(today(),c.tanggalMulai);return {text:`Kontrak mulai ${numID(n)} hari kerja lagi • durasi ${numID(dur)} hari kerja`,color:"blue"};}
+    if(today()>c.tanggalAkhir){const n=workDaysInclusiveV27(c.tanggalAkhir,today());return {text:`Kontrak lewat ${numID(n)} hari kerja • durasi ${numID(dur)} hari kerja`,color:"red"};}
+    const rem=workDaysInclusiveV27(today(),c.tanggalAkhir), elapsed=contractElapsed(proc);
+    return {text:`Sisa ${numID(rem)} hari kerja • ${numID(elapsed)}/${numID(dur)} hari kerja`,color:rem<=3?"yellow":"green"};
+  };
+  contractOk = function contractOk(proc){const c=proc?.contract||{};return !!(proc?.vendor&&c.noPks&&c.tanggalMulai&&c.tanggalAkhir)};
+
+  input = function input(){
+    if(!can("Input Pengadaan")) return denied("Anda tidak memiliki akses ke input pengadaan.");
+    return `<div class="card pad"><div class="head" style="margin-top:0"><div><h2>Input Data Pengadaan</h2><small>Form dibuat ringkas sesuai proses awal pengadaan.</small></div></div>${canInput()?`<div class="help ok">Cukup isi Nama Pengadaan, Bidang, dan Jenis Pengadaan. Detail barang, volume, tarif, dan total usulan diisi pada tab Alokasi KPH.</div><form id="procForm" style="margin-top:16px"><div class="formGrid"><div class="field"><label>Nama Pengadaan</label><input name="nama" required placeholder="Contoh: Pengadaan APAR KPH Bandung"></div><div class="field"><label>Bidang</label><input name="bidang" value="${esc(bidang()?cur().bidang:"")}" ${bidang()?"readonly":""} required placeholder="IT / Umum / Sarpra"></div><div class="field"><label>Jenis Pengadaan</label><select name="jenisPengadaan"><option>Pengadaan Langsung</option><option>Tender Cepat</option><option>Tender Terbuka</option><option>E-Purchasing</option><option>Penunjukan Langsung</option></select></div><div class="field full"><button class="btn primary">Simpan Data Pengadaan</button></div></div></form>`:`<div class="help warn">Role Anda hanya dapat melihat data. Input pengadaan dibatasi untuk Bidang Terkait.</div>`}</div><div class="head"><h2>Data Pengadaan</h2></div>${procTable(vis())}`;
+  };
+  saveProc = function saveProc(e){
+    e.preventDefault();
+    if(!canInput()) return toast("Input pengadaan hanya oleh Bidang Terkait atau Admin.");
+    const x=fd(e.target), bd=bidang()?cur().bidang:x.bidang;
+    db.procurements.push(p(db.nextProcId++,x.nama,bd,x.jenisPengadaan,"","",0,"",0,today()));
+    save(); toast("Data pengadaan berhasil disimpan."); state.page="procurements"; render();
+  };
+
+  procTable = function procTable(rows){
+    if(!rows.length) return `<div class="card empty">Belum ada data pengadaan.</div>`;
+    return `<div class="tableWrap"><table><thead><tr><th>Pengadaan</th><th>Bidang</th><th>Jenis Pengadaan</th><th>Total Usulan</th><th>Barang Diterima</th><th>Vendor</th><th>Progress</th><th>Posisi Terakhir</th><th>Tata Waktu</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${rows.map(proc=>{const st=STEPS[proc.currentStep],ps=status(proc),du=due(proc),vendor=spmk(proc)?(proc.vendor||`<span class="badge yellow">Belum diisi</span>`):`<span class="badge gray">Terkunci sampai SPMK</span>`;const us=totalUsulanV27(proc),rec=recTotal(proc);return `<tr><td data-label="Pengadaan"><button type="button" class="linkBtn" data-detail="${proc.id}"><b>${esc(proc.nama)}</b></button><br><small>Nama barang: ${esc(namaBarangListV27(proc))}</small></td><td data-label="Bidang">${esc(proc.bidang)}</td><td data-label="Jenis Pengadaan">${esc(proc.jenisPengadaan)}</td><td data-label="Total Usulan"><b>${numID(us)}</b><br><small>${esc(proc.satuan||"Unit")}</small></td><td data-label="Barang Diterima"><b>${numID(rec)}</b><br><small>${pct(rec,us)}%</small></td><td data-label="Vendor">${vendor}</td><td data-label="Progress"><div class="progress"><span style="width:${prog(proc)}%"></span></div><small>${prog(proc)}%</small></td><td data-label="Posisi Terakhir">${st?`<b>${esc(st.title)}</b><br><small>PIC: ${esc(st.pic)}</small>`:"<b>Selesai</b>"}</td><td data-label="Tata Waktu"><span class="badge ${du.color}">${esc(du.text)}</span></td><td data-label="Status"><span class="badge ${ps.color}">${esc(ps.text)}</span></td><td data-label="Aksi"><div class="tools"><button type="button" class="btn primary small" data-detail="${proc.id}">Detail</button>${canEditProc(proc)?`<button type="button" class="btn ghost small" data-edit="${proc.id}">Edit</button>`:""}</div></td></tr>`}).join("")}</tbody></table></div>`;
+  };
+  dashboard = function dashboard(){
+    const rows=vis(),done=rows.filter(x=>x.currentStep>=STEPS.length).length,run=rows.filter(x=>x.currentStep<STEPS.length).length,need=rows.filter(x=>isPic(STEPS[x.currentStep])).length;
+    return `<div class="grid cards">${stat("all","Total Pengadaan",rows.length,"Seluruh pengadaan yang dapat Anda akses")}${stat("done","Selesai",done,"Pengadaan selesai")}${stat("running","Sedang Berlangsung",run,"Klik untuk melihat proses berjalan")}${stat("need","Perlu Approval",need,"Tahapan sesuai PIC login")}</div><div class="head"><h2>Daftar Pengadaan</h2><div class="tools">${canInput()?`<button class="btn primary small" data-go="input">+ Input Pengadaan</button>`:""}<button class="btn ghost small" data-reset>Reset Data Demo</button></div></div>${procTable(filtered())}`;
+  };
+
+  function editProcModalV27(proc){
+    return `<div class="modalBack"><div class="modal"><div class="modalHead"><div><h2>Edit Data Pengadaan</h2><small>${esc(proc.nama)}</small></div><button type="button" class="btn ghost small" id="closeEditProc">Tutup</button></div><div class="modalBody"><form id="editProcForm" data-proc-id="${proc.id}"><div class="formGrid"><div class="field"><label>Nama Pengadaan</label><input name="nama" required value="${esc(proc.nama)}"></div><div class="field"><label>Bidang</label><input name="bidang" required value="${esc(proc.bidang)}" ${bidang()?"readonly":""}></div><div class="field"><label>Jenis Pengadaan</label><select name="jenisPengadaan">${["Pengadaan Langsung","Tender Cepat","Tender Terbuka","E-Purchasing","Penunjukan Langsung"].map(v=>`<option ${proc.jenisPengadaan===v?"selected":""}>${esc(v)}</option>`).join("")}</select></div><div class="field full"><button class="btn primary">Simpan Perubahan</button></div></div></form><div class="help" style="margin-top:14px">Detail barang, volume, tarif, pengiriman, dan penerimaan tetap dikelola pada tab operasional masing-masing.</div></div></div></div>`;
+  }
+  editProc = function editProc(id){
+    const proc=db.procurements.find(p=>p.id===+id);
+    if(!proc||!canEditProc(proc)) return toast("Anda tidak berwenang mengedit data ini.");
+    document.getElementById("modalRoot").innerHTML=editProcModalV27(proc);
+    document.getElementById("closeEditProc").onclick=()=>document.getElementById("modalRoot").innerHTML="";
+    document.getElementById("editProcForm").onsubmit=saveEditProcV27;
+  };
+  window.saveEditProcV27=function saveEditProcV27(e){
+    e.preventDefault();
+    const proc=db.procurements.find(p=>p.id===+e.target.dataset.procId),x=fd(e.target);
+    if(!proc) return toast("Data pengadaan tidak ditemukan.");
+    proc.nama=x.nama.trim(); proc.bidang=bidang()?cur().bidang:x.bidang.trim(); proc.jenisPengadaan=x.jenisPengadaan;
+    save(); document.getElementById("modalRoot").innerHTML=""; toast("Data pengadaan berhasil diperbarui."); render();
+  };
+
+  contractOptionData = function contractOptionData(proc){const c=proc.contract||{};return `data-vendor="${esc(proc.vendor||"")}" data-nopks="${esc(c.noPks||"")}" data-tglpks="${esc(isoToID(c.tanggalPks)||"")}" data-tglmulai="${esc(isoToID(c.tanggalMulai)||"")}" data-tglakhir="${esc(isoToID(c.tanggalAkhir)||"")}" data-keterangan="${esc(c.keterangan||"")}"`};
+  contractForm = function contractForm(rows,selectedId=""){
+    if(!rows.length) return `<div class="empty">Belum ada pengadaan yang mencapai SPMK.</div>`;
+    return `<form id="contractForm"><div class="formGrid"><div class="field"><label>Pengadaan</label><select name="procId" id="contractProc" required>${rows.map(proc=>`<option value="${proc.id}" ${+selectedId===proc.id?"selected":""} ${contractOptionData(proc)}>${esc(proc.nama)}</option>`).join("")}</select></div><div class="field"><label>Vendor Bertanggung Jawab</label><input name="vendor" id="contractVendor" required placeholder="Nama vendor"></div><div class="field"><label>No PKS</label><input name="noPks" id="contractNoPks" required placeholder="Nomor PKS"></div><div class="field"><label>Tanggal PKS</label><input name="tanggalPks" id="contractTanggalPks" class="date-id" inputmode="numeric" placeholder="DD/MM/YYYY"></div><div class="field"><label>Tanggal Mulai Kontrak</label><input name="tanggalMulai" id="contractTanggalMulai" class="date-id" inputmode="numeric" placeholder="DD/MM/YYYY" required></div><div class="field"><label>Tanggal Akhir Kontrak</label><input name="tanggalAkhir" id="contractTanggalAkhir" class="date-id" inputmode="numeric" placeholder="DD/MM/YYYY" required></div><div class="field"><label>Durasi Hari Efektif</label><input id="contractDurasi" disabled placeholder="Otomatis Senin-Jumat, libur tidak dihitung"></div><div class="field"><label>Status Tata Waktu</label><input id="contractStatusText" disabled placeholder="Otomatis hari kerja efektif"></div><div class="field full"><label>Keterangan Masa Pelaksanaan</label><textarea name="keterangan" id="contractKeterangan" placeholder="Catatan masa pelaksanaan pekerjaan"></textarea></div><div class="field full"><button class="btn primary">Simpan Masa Pelaksanaan</button></div></div></form>`;
+  };
+  refreshContractForm = function refreshContractForm(){
+    const opt=document.getElementById("contractProc")?.selectedOptions?.[0]; if(!opt) return;
+    const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v||""};
+    set("contractVendor",opt.dataset.vendor); set("contractNoPks",opt.dataset.nopks); set("contractTanggalPks",opt.dataset.tglpks); set("contractTanggalMulai",opt.dataset.tglmulai); set("contractTanggalAkhir",opt.dataset.tglakhir); set("contractKeterangan",opt.dataset.keterangan); updateContractPreview(); bindFormattedInputs(document.getElementById("contractForm"));
+  };
+  updateContractPreview = function updateContractPreview(){
+    const mulai=idToISO(document.getElementById("contractTanggalMulai")?.value), akhir=idToISO(document.getElementById("contractTanggalAkhir")?.value), dur=document.getElementById("contractDurasi"), stat=document.getElementById("contractStatusText");
+    if(!dur||!stat) return; if(!mulai||!akhir){dur.value="";stat.value="Lengkapi tanggal mulai dan akhir format DD/MM/YYYY";return;}
+    const n=workDaysInclusiveV27(mulai,akhir); dur.value=n>=0?`${numID(n)} hari kerja efektif`:"Tanggal akhir harus setelah/sama dengan mulai"; stat.value=contractStatus({contract:{tanggalMulai:mulai,tanggalAkhir:akhir}}).text;
+  };
+  saveContractForm = function saveContractForm(e){
+    e.preventDefault();
+    const data=fd(e.target), proc=db.procurements.find(p=>p.id===+data.procId);
+    if(!proc) return toast("Pengadaan tidak ditemukan.");
+    if(!spmk(proc)) return toast("Masa Pelaksanaan baru dapat diisi setelah SPMK.");
+    const tanggalPks=idToISO(data.tanggalPks), tanggalMulai=idToISO(data.tanggalMulai), tanggalAkhir=idToISO(data.tanggalAkhir);
+    if(!data.vendor||!data.noPks||!tanggalMulai||!tanggalAkhir) return toast("Vendor, No PKS, tanggal mulai, dan tanggal akhir wajib diisi format DD/MM/YYYY.");
+    if(calendarDiffV27(tanggalMulai,tanggalAkhir)<0) return toast("Tanggal akhir kontrak tidak boleh sebelum tanggal mulai.");
+    proc.vendor=data.vendor.trim(); proc.contract={...(proc.contract||{}),noPks:data.noPks.trim(),tanggalPks,tanggalMulai,tanggalAkhir,keterangan:data.keterangan||""}; delete proc.contract.tanggalPerjanjian;
+    save(); toast("Masa Pelaksanaan berhasil disimpan. Tata waktu memakai hari kerja efektif."); document.getElementById("modalRoot").innerHTML=""; render();
+  };
+  masa = function masa(){
+    const rows=vis().filter(spmk);
+    return `<div class="help">Masa Pelaksanaan dibuka setelah SPMK. Tanggal Perjanjian Sesuai Kontrak dihapus. Tata waktu dihitung berdasarkan hari kerja efektif Senin-Jumat dan daftar hari libur.</div><div class="card pad" style="margin-top:14px"><div class="head" style="margin-top:0"><h2>Input Masa Pelaksanaan Pekerjaan</h2></div>${can("Masa Pelaksanaan","edit")?contractForm(rows):`<div class="help warn">Role Anda tidak dapat mengisi masa pelaksanaan.</div>`}</div><div class="head"><h2>Pengadaan Setelah SPMK</h2></div>${rows.length?`<div class="tableWrap"><table><thead><tr><th>Pengadaan</th><th>Vendor</th><th>No PKS</th><th>Tanggal PKS</th><th>Mulai</th><th>Akhir</th><th>Durasi Hari Efektif</th><th>Tata Waktu</th><th>Aksi</th></tr></thead><tbody>${rows.map(proc=>{const cs=contractStatus(proc);return `<tr><td data-label="Pengadaan"><b>${esc(proc.nama)}</b><br><small>${esc(proc.bidang)}</small></td><td data-label="Vendor">${esc(proc.vendor||"-")}</td><td data-label="No PKS">${esc(proc.contract.noPks||"-")}</td><td data-label="Tanggal PKS">${d(proc.contract.tanggalPks)}</td><td data-label="Mulai">${d(proc.contract.tanggalMulai)}</td><td data-label="Akhir">${d(proc.contract.tanggalAkhir)}</td><td data-label="Durasi">${numID(contractDuration(proc)||0)} hari kerja</td><td data-label="Tata Waktu"><span class="badge ${cs.color}">${esc(cs.text)}</span></td><td data-label="Aksi">${can("Masa Pelaksanaan","edit")?`<button type="button" class="btn primary small" data-contract="${proc.id}">Isi/Edit</button>`:"-"}</td></tr>`}).join("")}</tbody></table></div>`:`<div class="card empty">Belum ada pengadaan yang mencapai SPMK.</div>`}`;
+  };
+  contract = function contract(id){
+    const rows=vis().filter(spmk), proc=db.procurements.find(p=>p.id===+id);
+    if(!proc||!spmk(proc)) return toast("Masa Pelaksanaan baru dapat diisi setelah SPMK.");
+    document.getElementById("modalRoot").innerHTML=`<div class="modalBack"><div class="modal"><div class="modalHead"><div><h2>Input Masa Pelaksanaan Pekerjaan</h2><small>${esc(proc.nama)} • Hari kerja efektif</small></div><button type="button" class="btn ghost small" id="closeContractModal">Tutup</button></div><div class="modalBody"><div class="help">Lengkapi vendor, No PKS, tanggal PKS, tanggal mulai, dan tanggal akhir. Tanggal Perjanjian Sesuai Kontrak tidak digunakan.</div><div style="height:14px"></div>${contractForm(rows,id)}</div></div></div>`;
+    document.getElementById("closeContractModal").onclick=()=>document.getElementById("modalRoot").innerHTML=""; bindContractForm(); refreshContractForm();
+  };
+
+  function allocationHeaderV27(proc){return `<div class="formGrid allocHeaderV27"><div class="field"><label>Vendor</label><input name="vendor" data-vendor-field readonly value="${esc(proc?.vendor||"")}" placeholder="Otomatis dari Masa Pelaksanaan"></div><div class="field"><label>No PKS</label><input name="noPks" data-nopks-field readonly required value="${esc(proc?.contract?.noPks||"")}" placeholder="${esc(noPksReadonlyHelpV27(proc))}"></div><div class="field"><label>Tanggal PKS</label><input name="tanggalPks" data-tglpks-field readonly value="${esc(isoToID(proc?.contract?.tanggalPks)||"")}" placeholder="Otomatis dari Masa Pelaksanaan"></div><div class="field"><label>Tahun PKS</label><input name="tahunPks" class="num-id" inputmode="numeric" value="${new Date().getFullYear()}"></div></div>`;}
+  multiAllocationForm = function multiAllocationForm(proc=null, formId="allocMultiForm"){
+    const rows=proc?[proc]:vis().filter(spmk);
+    if(!rows.length) return `<div class="empty">Belum ada pengadaan yang mencapai SPMK.</div>`;
+    const selected=proc?.id||rows[0].id, p0=proc||rows[0];
+    return `<form id="${formId}" class="multiForm" data-kind="allocation"><div class="formGrid"><div class="field full"><label>Pengadaan</label><select name="procId" data-proc-select ${proc?"disabled":""}>${rows.map(p=>`<option value="${p.id}" ${p.id===selected?"selected":""}>${esc(p.nama)}</option>`).join("")}</select>${proc?`<input type="hidden" name="procId" value="${proc.id}">`:""}</div></div>${allocationHeaderV29(p0)}<div class="multiRows" data-container="allocation">${allocationRowTemplate()}</div><div class="multiToolbar"><button type="button" class="btn ghost small" data-add-allocation-row>+ Tambah Barang KPH</button><button class="btn primary" type="submit">Simpan Semua Alokasi</button></div></form>`;
+  };
+  allocationRowTemplate = function allocationRowTemplate(values={}){
+    return `<div class="multiRow allocationRow"><div class="rowHeader"><b>Baris Barang Alokasi</b><button type="button" class="btn danger small" data-remove-row>Hapus</button></div><div class="formGrid"><div class="field"><label>Satuan Kerja</label><input name="satuanKerja" required value="${esc(values.satuanKerja||"")}" placeholder="KPH Bandung"></div><div class="field"><label>Termin</label><select name="termin">${["Langsung","Termin I","Termin II","Termin III"].map(t=>`<option ${values.termin===t?"selected":""}>${esc(t)}</option>`).join("")}</select></div><div class="field"><label>Tanggal Mulai</label><input name="tanggalMulai" class="date-id" inputmode="numeric" required value="${esc(isoToID(values.tanggalMulai)||"")}" placeholder="DD/MM/YYYY"></div><div class="field"><label>Tanggal Akhir</label><input name="tanggalAkhir" class="date-id" inputmode="numeric" required value="${esc(isoToID(values.tanggalAkhir)||"")}" placeholder="DD/MM/YYYY"></div><div class="field"><label>Nama Barang</label><input name="jenisBarang" required value="${esc(values.jenisBarang||"")}" placeholder="Contoh: APAR"></div><div class="field"><label>Satuan</label><input name="satuan" required value="${esc(values.satuan||"Unit")}"></div><div class="field"><label>Tarif (Rp)</label><input name="tarif" class="num-id" inputmode="numeric" required value="${values.tarif?numID(values.tarif):""}"></div><div class="field"><label>Volume Barang</label><input name="volume" class="num-id" inputmode="numeric" required value="${values.volume?numID(values.volume):""}"></div><div class="field"><label>Nilai</label><input disabled placeholder="Otomatis = tarif x volume"></div></div></div>`;
+  };
+  function syncAllocationHeaderV27(form){
+    const proc=selectedProcFromForm(form); if(!proc) return;
+    const set=(sel,v)=>{const el=form.querySelector(sel); if(el) el.value=v||""};
+    set('[data-vendor-field]',proc.vendor||""); set('[data-nopks-field]',proc.contract?.noPks||""); set('[data-tglpks-field]',isoToID(proc.contract?.tanggalPks)||"");
+  }
+  saveMultiAllocation = function saveMultiAllocation(e){
+    e.preventDefault();
+    const form=e.target,data=fd(form),proc=db.procurements.find(p=>p.id===+data.procId);
+    if(!proc) return toast("Pengadaan tidak ditemukan.");
+    if(!spmk(proc)) return toast("Alokasi hanya dapat diisi setelah SPMK.");
+    if(!contractOk(proc)) return toast("Lengkapi Masa Pelaksanaan terlebih dahulu agar No PKS tersedia.");
+    if(!can("Alokasi KPH","tambah")&&!isPic(STEPS[proc.currentStep])) return toast("Anda tidak dapat mengisi alokasi.");
+    const rows=readRows(form,".allocationRow");
+    if(!rows.length) return toast("Minimal isi satu baris barang alokasi.");
+    for(const r of rows){if(!r.satuanKerja||!r.termin||!r.tanggalMulai||!r.tanggalAkhir||!r.jenisBarang||!r.satuan||!r.tarif||!r.volume) return toast("Setiap baris alokasi wajib memiliki satuan kerja, termin, tanggal mulai/akhir, nama barang, satuan, tarif, dan volume."); if(dateDiffV29(r.tanggalMulai,r.tanggalAkhir)<0) return toast("Tanggal akhir alokasi tidak boleh sebelum tanggal mulai.");}
+    rows.forEach(r=>proc.allocations.push(alloc(proc.vendor,proc.contract.noPks,proc.contract.tanggalPks,r.termin,r.tanggalMulai,r.tanggalAkhir,r.satuanKerja,r.jenisBarang,r.satuan,r.tarif,r.volume,parseNumID(data.tahunPks)||new Date().getFullYear())));
+    proc.totalUsulan=proc.allocations.reduce((a,b)=>a+(Number(b.volume)||0),0); proc.satuan=proc.allocations[0]?.satuan||proc.satuan||"Unit"; proc.jenisBarang=namaBarangListV29(proc);
+    save(); toast(`${numID(rows.length)} baris barang alokasi berhasil disimpan.`); modalOpenV29()?detail(proc.id):render();
+  };
+  allocation = function allocation(){const rows=vis().filter(spmk);return `<div class="help">No PKS otomatis diambil dari Masa Pelaksanaan. Satu KPH dapat memiliki lebih dari satu nama barang melalui tombol Tambah Barang KPH.</div><div class="card pad" style="margin-top:14px"><h2 style="margin-top:0">Form Alokasi Barang Per KPH</h2>${can("Alokasi KPH","tambah")?multiAllocationForm(null,"allocMultiForm"):`<div class="help warn">Role Anda tidak dapat menambah alokasi.</div>`}</div><div class="head"><h2>Data Alokasi</h2></div>${allocTable(rows)}`;};
+  allocTable = function allocTable(rows){let list=[];rows.forEach(proc=>(proc.allocations||[]).forEach((a,i)=>list.push({proc,_idx:i,...a})));if(!list.length)return`<div class="card empty">Belum ada alokasi.</div>`;return`<div class="tableWrap"><table><thead><tr><th>Pengadaan</th><th>Vendor</th><th>No PKS</th><th>Termin</th><th>Tgl Mulai</th><th>Tgl Akhir</th><th>Satuan Kerja</th><th>Nama Barang</th><th>Tarif</th><th>Volume</th><th>Nilai</th></tr></thead><tbody>${list.map(x=>`<tr><td data-label="Pengadaan"><b>${esc(x.proc.nama)}</b></td><td data-label="Vendor">${esc(x.vendor)}</td><td data-label="No PKS">${esc(x.noPks)}</td><td data-label="Termin">${esc(x.termin)}</td><td data-label="Tgl Mulai">${d(x.tanggalMulai)}</td><td data-label="Tgl Akhir">${d(x.tanggalAkhir)}</td><td data-label="Satuan Kerja">${esc(x.satuanKerja)}</td><td data-label="Nama Barang">${esc(x.jenisBarang)}</td><td data-label="Tarif">${rp(x.tarif)}</td><td data-label="Volume">${numID(x.volume)} ${esc(x.satuan||"")}</td><td data-label="Nilai">${rp(x.nilai)}</td></tr>`).join("")}</tbody></table></div>`};
+
+  function allocationOptionsV27(proc){return (proc?.allocations||[]).map((a,i)=>({value:i,label:`${a.satuanKerja||"-"} • ${a.jenisBarang||"Barang"} • ${a.termin||"-"} • ${numID(a.volume||0)} ${a.satuan||""}`,row:a}));}
+  function selectedAllocationV27(proc,idx){const arr=proc?.allocations||[];return arr[Number(idx)]||arr[0]||{};}
+  movementRowTemplate = function movementRowTemplate(values={}, isReceipt=false, procId=null){
+    const proc=db.procurements.find(p=>p.id===+(procId||values.procId||0)) || vis().find(p=>spmk(p)&&p.allocations.length) || null;
+    const opts=allocationOptionsV27(proc), selected=values.allocationIndex!=null?Number(values.allocationIndex):0, src=selectedAllocationV27(proc,selected);
+    const labelTanggal=isReceipt?"Tanggal Penerimaan":"Tanggal Pengiriman", labelVolume=isReceipt?"Volume Diterima":"Volume Terkirim";
+    return `<div class="multiRow movementRow"><div class="rowHeader"><b>Baris ${isReceipt?"Penerimaan":"Pengiriman"}</b><button type="button" class="btn danger small" data-remove-row>Hapus</button></div><div class="formGrid"><div class="field"><label>${labelTanggal}</label><input name="tanggal" class="date-id" inputmode="numeric" required value="${esc(isoToID(values.tanggal)||"")}" placeholder="DD/MM/YYYY"></div><div class="field full"><label>Pilih Barang dari Alokasi KPH</label><select name="allocationIndex" data-allocation-select required>${opts.map(o=>`<option value="${o.value}" ${selected===o.value?"selected":""}>${esc(o.label)}</option>`).join("")}</select></div><div class="field"><label>Satuan Kerja</label><input name="satuanKerja" readonly required value="${esc(values.satuanKerja||src.satuanKerja||"")}"></div><div class="field"><label>Termin</label><input name="termin" readonly required value="${esc(values.termin||src.termin||"")}"></div><div class="field"><label>Nama Barang</label><input name="jenisBarang" readonly required value="${esc(values.jenisBarang||src.jenisBarang||"")}"></div><div class="field"><label>Satuan</label><input name="satuan" readonly required value="${esc(values.satuan||src.satuan||"")}"></div><div class="field"><label>Tarif (Rp)</label><input name="tarif" readonly class="num-id" value="${src.tarif?numID(src.tarif):""}"></div><div class="field"><label>${labelVolume}</label><input name="volume" class="num-id" inputmode="numeric" required value="${values.volume?numID(values.volume):""}"></div><div class="field full"><label>Upload DP / File Dokumen</label>${typeof uploadDpFileDokumenHtmlV9==="function"?uploadDpFileDokumenHtmlV9("dpCameraName","dpFile"):`<input name="dpFile" type="file">`}</div><div class="field"><label>Nilai</label><input disabled placeholder="Otomatis = tarif x volume"></div></div></div>`;
+  };
+  multiMovementForm = function multiMovementForm(proc=null, formId, type){
+    const allowed=type==="receipts"?vis().filter(p=>spmk(p)&&p.shipments.length&&p.allocations.length):vis().filter(p=>spmk(p)&&p.allocations.length);
+    const rows=proc?[proc]:allowed; if(!rows.length) return `<div class="empty">${type==="receipts"?"Belum ada pengiriman/alokasi, sehingga penerimaan belum dapat diinput.":"Belum ada pengadaan yang sudah SPMK dan memiliki alokasi."}</div>`;
+    const p0=proc||rows[0], isReceipt=type==="receipts";
+    return `<form id="${formId}" class="multiForm" data-kind="${type}"><div class="formGrid"><div class="field"><label>Pengadaan</label><select name="procId" data-proc-select ${proc?"disabled":""}>${rows.map(p=>`<option value="${p.id}" ${p.id===p0.id?"selected":""}>${esc(p.nama)}</option>`).join("")}</select>${proc?`<input type="hidden" name="procId" value="${proc.id}">`:""}</div><div class="field"><label>No PKS</label><input name="noPks" data-nopks-field readonly required value="${esc(p0?.contract?.noPks||"")}" placeholder="Otomatis dari Masa Pelaksanaan"></div><div class="field"><label>Tahun PKS</label><input name="tahunPks" class="num-id" inputmode="numeric" value="${new Date().getFullYear()}"></div></div><div class="multiRows" data-container="${type}">${movementRowTemplate({},isReceipt,p0.id)}</div><div class="multiToolbar"><button type="button" class="btn ghost small" data-add-movement-row="${type}">+ Tambah ${isReceipt?"Penerimaan":"Pengiriman"} Barang</button><button class="btn primary" type="submit">Simpan Semua ${isReceipt?"Penerimaan":"Pengiriman"}</button></div></form>`;
+  };
+  function updateMovementRowByAllocationV27(row,proc){
+    const idx=row.querySelector('[name="allocationIndex"]')?.value || 0, src=selectedAllocationV27(proc,idx);
+    const set=(name,v)=>{const el=row.querySelector(`[name="${name}"]`); if(el) el.value=v||""};
+    set("satuanKerja",src.satuanKerja); set("termin",src.termin); set("jenisBarang",src.jenisBarang); set("satuan",src.satuan); set("tarif",src.tarif?numID(src.tarif):"");
+  }
+  function bindMovementAutoV27(form,type){
+    const syncHeader=()=>{const proc=selectedProcFromForm(form);const no=form.querySelector('[data-nopks-field]');if(no)no.value=proc?.contract?.noPks||"";return proc};
+    form.querySelector('[data-proc-select]')?.addEventListener('change',()=>{const proc=syncHeader(),box=form.querySelector(`[data-container="${type}"]`);box.innerHTML=movementRowTemplate({},type==="receipts",proc?.id);bindMultiForms();});
+    const proc=syncHeader();
+    form.querySelectorAll('.movementRow').forEach(row=>{row.querySelector('[data-allocation-select]')?.addEventListener('change',()=>updateMovementRowByAllocationV27(row,proc));updateMovementRowByAllocationV27(row,proc);});
+  }
+  readRows = function readRows(form,selector){return [...form.querySelectorAll(selector)].map(row=>{const q=name=>row.querySelector(`[name="${name}"]`)?.value?.trim()||"";const files=typeof fileInputsForRow==="function"?fileInputsForRow(row):{dpUnified:""};return {allocationIndex:q("allocationIndex"),satuanKerja:q("satuanKerja"),termin:q("termin"),tanggal:idToISO(q("tanggal")),tanggalMulai:idToISO(q("tanggalMulai")),tanggalAkhir:idToISO(q("tanggalAkhir")),jenisBarang:q("jenisBarang"),satuan:q("satuan"),tarif:parseNumID(q("tarif")),volume:parseNumID(q("volume")),dp:files.dpUnified||q("dp"),noPks:q("noPks")}}).filter(r=>r.satuanKerja||r.volume||r.jenisBarang)};
+  saveMultiMovement = function saveMultiMovement(e,type){
+    e.preventDefault(); const form=e.target,data=fd(form),proc=db.procurements.find(p=>p.id===+data.procId); if(!proc)return toast("Pengadaan tidak ditemukan.");
+    if(!spmk(proc)) return toast("Data hanya dapat diinput setelah SPMK."); if(!contractOk(proc)) return toast("Lengkapi Masa Pelaksanaan terlebih dahulu agar No PKS tersedia.");
+    if(type==="shipments"&&!proc.allocations.length) return toast("Pengiriman membutuhkan alokasi barang terlebih dahulu."); if(type==="receipts"&&!proc.shipments.length) return toast("Penerimaan baru dapat diinput setelah pengiriman tersimpan.");
+    const rows=readRows(form,".movementRow"); if(!rows.length)return toast("Minimal isi satu baris data.");
+    for(const r of rows){if(!r.tanggal||!r.satuanKerja||!r.termin||!r.jenisBarang||!r.satuan||!r.volume) return toast("Setiap baris wajib memiliki tanggal, barang alokasi, satuan kerja, termin, nama barang, satuan, dan volume."); if(!r.dp) return toast("Setiap baris wajib memiliki Upload DP / File Dokumen: pilih file atau ambil foto langsung.");}
+    rows.forEach(r=>proc[type].push(mov(r.tanggal,proc.contract.noPks,r.termin,r.satuanKerja,r.jenisBarang,r.satuan,r.tarif,r.volume,parseNumID(data.tahunPks)||new Date().getFullYear(),r.dp)));
+    save(); toast(`${numID(rows.length)} baris ${type==="shipments"?"pengiriman":"penerimaan"} berhasil disimpan.`); modalOpenV29()?detail(proc.id):render();
+  };
+  shipping = function shipping(){const rows=vis().filter(x=>spmk(x)&&x.allocations.length);return `<div class="help">Nomor PKS otomatis dari Masa Pelaksanaan. Nama Barang diambil dari data Alokasi KPH.</div><div class="card pad" style="margin-top:14px"><h2 style="margin-top:0">Form Pengiriman Barang</h2>${can("Pengiriman Barang","tambah")?multiMovementForm(null,"shipMultiForm","shipments"):`<div class="help warn">Role Anda tidak dapat menambah pengiriman.</div>`}</div><div class="head"><h2>Data Pengiriman</h2></div>${movTable("shipments")}`;};
+  receiving = function receiving(){const rows=vis().filter(x=>spmk(x)&&x.shipments.length);return `<div class="help ${rows.length?"":"warn"}">Nomor PKS otomatis dari Masa Pelaksanaan. Nama Barang diambil dari data Alokasi KPH.</div><div class="card pad" style="margin-top:14px"><h2 style="margin-top:0">Form Penerimaan Barang</h2>${can("Penerimaan Barang","tambah")?multiMovementForm(null,"recMultiForm","receipts"):`<div class="help warn">Role Anda tidak dapat menambah penerimaan.</div>`}</div><div class="head"><h2>Data Penerimaan</h2></div>${movTable("receipts")}`;};
+  existingDataTable = function existingDataTable(proc,type){const data=proc[type]||[],isAlloc=type==="allocations";if(!data.length)return`<div class="help" style="margin-top:12px">Belum ada data ${labelDataType(type)}.</div>`;return `<div class="tableWrap" style="margin-top:12px"><table><thead><tr><th>Satuan Kerja</th><th>Termin</th>${isAlloc?"<th>Tgl Mulai</th><th>Tgl Akhir</th>":"<th>Tanggal</th>"}<th>Nama Barang</th><th>Volume</th><th>Tarif</th><th>Nilai</th><th>Upload DP / File Dokumen</th></tr></thead><tbody>${data.map(r=>`<tr><td data-label="Satuan Kerja">${esc(r.satuanKerja||"-")}</td><td data-label="Termin">${esc(r.termin||"-")}</td>${isAlloc?`<td data-label="Tgl Mulai">${d(r.tanggalMulai)}</td><td data-label="Tgl Akhir">${d(r.tanggalAkhir)}</td>`:`<td data-label="Tanggal">${d(r.tanggal)}</td>`}<td data-label="Nama Barang">${esc(r.jenisBarang||"-")}</td><td data-label="Volume">${numID(r.volume||0)} ${esc(r.satuan||"")}</td><td data-label="Tarif">${rp(r.tarif||0)}</td><td data-label="Nilai">${rp(r.nilai||0)}</td><td data-label="Upload">${esc(r.dp||"-")}</td></tr>`).join("")}</tbody></table></div>`};
+  movTable = function movTable(type){let list=[];vis().forEach(proc=>(proc[type]||[]).forEach(row=>list.push({proc,...row})));if(!list.length)return`<div class="card empty">Belum ada data.</div>`;return`<div class="tableWrap"><table><thead><tr><th>Pengadaan</th><th>Tanggal</th><th>No PKS</th><th>Termin</th><th>Satuan Kerja</th><th>Nama Barang</th><th>Tarif</th><th>Volume</th><th>Nilai</th><th>Upload DP / File Dokumen</th></tr></thead><tbody>${list.map(x=>`<tr><td data-label="Pengadaan"><b>${esc(x.proc.nama)}</b></td><td data-label="Tanggal">${d(x.tanggal)}</td><td data-label="No PKS">${esc(x.noPks)}</td><td data-label="Termin">${esc(x.termin)}</td><td data-label="Satuan Kerja">${esc(x.satuanKerja)}</td><td data-label="Nama Barang">${esc(x.jenisBarang)}</td><td data-label="Tarif">${rp(x.tarif)}</td><td data-label="Volume">${numID(x.volume)} ${esc(x.satuan||"")}</td><td data-label="Nilai">${rp(x.nilai)}</td><td data-label="Upload">${esc(x.dp||"-")}</td></tr>`).join("")}</tbody></table></div>`};
+
+  function quickUploadHtmlV27(){return typeof uploadDokumenTahapanHtmlV9==="function"?uploadDokumenTahapanHtmlV9():`<input name="fileUpload" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,image/*">`;}
+  function fileInputsV27(form){const raw=typeof fileInputsForForm==="function"?fileInputsForForm(form):{file:fileLabel(form.querySelector('[name="fileUpload"]')),camera:""};return {file:raw.unified||[raw.file,raw.camera].filter(Boolean).join(" | "),camera:raw.camera||""};}
+  function operationalNeedButtonV27(proc){
+    const id=proc.currentStep;
+    if(id===IDX.MASA&&!contractOk(proc)) return `<button type="button" class="btn ghost small" data-contract="${proc.id}">Lengkapi Masa Pelaksanaan</button>`;
+    if(id===IDX.ALOKASI&&!proc.allocations.length) return `<button type="button" class="btn ghost small" data-open-operational="allocation">Lengkapi Alokasi KPH</button>`;
+    if(id===IDX.KIRIM&&!proc.shipments.length) return `<button type="button" class="btn ghost small" data-open-operational="shipping">Lengkapi Pengiriman</button>`;
+    if(id===IDX.TERIMA&&!proc.receipts.length) return `<button type="button" class="btn ghost small" data-open-operational="receiving">Lengkapi Penerimaan</button>`;
+    return "";
+  }
+  function quickApprovalCardV27(proc){
+    const st=STEPS[proc.currentStep]; if(!st) return "";
+    const g=gate(proc,proc.currentStep), docs=(proc.documents||[]).filter(d=>+d.stepId===+proc.currentStep);
+    const canApprove=isPic(st), hasDoc=docs.length>0, opBtn=operationalNeedButtonV27(proc);
+    return `<div class="card pad quickApprovalCard"><div class="quickApprovalHead"><button type="button" class="approvalNameClick" data-detail="${proc.id}"><b>${esc(proc.nama)}</b><span>${esc(proc.bidang)} • ${esc(proc.jenisPengadaan)}</span></button><div class="tools"><span class="badge teal">PIC: ${esc(st.pic)}</span><span class="badge ${due(proc).color}">${esc(due(proc).text)}</span></div></div><div class="quickStep"><small>Tahapan aktif</small><b>${esc(st.title)}</b><span>${esc(st.detail||"")}</span></div><div class="help ${g.ok?"ok":"warn"}" style="margin-top:12px">${g.ok?"Syarat approval sudah lengkap. PIC dapat approve langsung dari kartu ini.":`Belum bisa approve: ${esc(g.msg)}`}</div>${opBtn?`<div class="quickOperationalAction">${opBtn}</div>`:""}<form class="quickApprovalForm" data-proc-id="${proc.id}"><div class="formGrid compactApprovalGrid"><div class="field"><label>Nama Dokumen</label><input name="name" value="Dokumen ${esc(st.title)}" required></div><div class="field full"><label>Upload Dokumen / Foto</label>${quickUploadHtmlV27()}</div><div class="field full"><label>Catatan</label><textarea name="note" placeholder="Catatan dokumen approval"></textarea></div><div class="field full"><button class="btn primary" ${canApprove?"":"disabled"}>${hasDoc?"Tambah Dokumen & Approve":"Simpan Dokumen & Approve"}</button></div></div></form>${docs.length?`<div class="quickDocList">${docs.map(d=>`<span class="badge blue">${esc(d.name||"Dokumen")} • ${esc(d.file||d.camera||"File")}</span>`).join("")}</div>`:""}</div>`;
+  }
+  approval = function approval(){
+    const apps=vis().filter(proc=>proc.currentStep<STEPS.length&&isPic(STEPS[proc.currentStep]));
+    return `<div class="head" style="margin-top:0"><div><h2>Antrian Approval Anda</h2><small>Ringkas: tidak menampilkan seluruh Alur Approval Pengadaan. PIC dapat upload dokumen dan approve langsung di kartu aktif.</small></div></div><div class="help ok">Klik nama pengadaan hanya untuk membuka detail. Proses approve harian dilakukan dari kartu antrian agar tidak panjang ke bawah.</div><div class="quickApprovalList">${apps.length?apps.map(quickApprovalCardV27).join(""):`<div class="card empty">Tidak ada approval yang menjadi PIC Anda saat ini.</div>`}</div>`;
+  };
+  window.quickApprovalSubmitV27=function quickApprovalSubmitV27(e){
+    e.preventDefault();
+    const form=e.target, proc=db.procurements.find(p=>p.id===+form.dataset.procId); if(!proc)return toast("Pengadaan tidak ditemukan.");
+    const files=fileInputsV27(form), data=fd(form); if(!files.file) return toast("Pilih file dokumen atau ambil foto langsung terlebih dahulu.");
+    proc.documents=proc.documents||[]; proc.documents.push({stepId:proc.currentStep,stepTitle:STEPS[proc.currentStep]?.title||"-",name:data.name||`Dokumen ${STEPS[proc.currentStep]?.title||"Approval"}`,file:files.file,camera:files.camera,note:data.note||"",by:session.name,role:session.role,at:new Date().toISOString()});
+    save(); approve(proc.id);
+  };
+  approve = function approve(id){
+    const proc=db.procurements.find(p=>p.id===+id); if(!proc)return;
+    proc.stepStartedAt=proc.stepStartedAt||{}; const current=proc.currentStep; if(!proc.stepStartedAt[current]) proc.stepStartedAt[current]=stepStartISO(proc,current);
+    const g=gate(proc,current); if(!g.ok)return toast(g.msg);
+    if(!proc.completedSteps.includes(current)) proc.completedSteps.push(current);
+    proc.approvals=proc.approvals||[]; proc.approvals.push({stepId:current,stepTitle:STEPS[current].title,pic:STEPS[current].pic,startedAt:proc.stepStartedAt[current],approvedBy:session.name,approvedRole:session.role,approvedAt:new Date().toISOString(),workDays:workDaysElapsedV27(proc.stepStartedAt[current],today())});
+    proc.currentStep=Math.min(STEPS.length,current+1); if(proc.currentStep<STEPS.length) proc.stepStartedAt[proc.currentStep]=today(); save(); toast("Approval berhasil disimpan.");
+    if(document.querySelector('.approvalDetailModal')) detail(proc.id); else render();
+  };
+  gate = function gate(proc,id){
+    const st=STEPS[id]; if(!isPic(st)) return {ok:false,msg:"Role login bukan PIC tahapan ini."};
+    if(id===IDX.MASA&&!contractOk(proc)) return {ok:false,msg:"Masa Pelaksanaan wajib dilengkapi terlebih dahulu."};
+    if(id===IDX.ALOKASI&&!proc.allocations.length) return {ok:false,msg:"Alokasi KPH wajib diisi terlebih dahulu."};
+    if(id===IDX.KIRIM&&!proc.shipments.length) return {ok:false,msg:"Pengiriman wajib diisi terlebih dahulu."};
+    if(id===IDX.TERIMA&&!proc.receipts.length) return {ok:false,msg:"Penerimaan wajib diisi setelah pengiriman."};
+    if(id===IDX.TPHP&&pct(recTotal(proc),totalUsulanV27(proc))<100) return {ok:false,msg:"TPHP aktif setelah barang diterima 100%."};
+    if(!(proc.documents||[]).some(d=>+d.stepId===+id) && !hasStepDocument(proc,id)) return {ok:false,msg:"Upload dokumen/foto wajib sebelum approve."};
+    return {ok:true,msg:"Dapat di-approve."};
+  };
+
+  bindMultiForms = function bindMultiForms(){
+    document.querySelectorAll("[data-add-allocation-row]").forEach(btn=>{btn.onclick=()=>{const form=btn.closest("form"),box=form.querySelector('[data-container="allocation"]');box.insertAdjacentHTML("beforeend",allocationRowTemplate());bindMultiForms();bindFormattedInputs(form)}});
+    document.querySelectorAll("[data-add-movement-row]").forEach(btn=>{btn.onclick=()=>{const form=btn.closest("form"),type=btn.dataset.addMovementRow,proc=selectedProcFromForm(form),box=form.querySelector(`[data-container="${type}"]`);box.insertAdjacentHTML("beforeend",movementRowTemplate({},type==="receipts",proc?.id));bindMultiForms();bindFormattedInputs(form)}});
+    document.querySelectorAll("[data-remove-row]").forEach(btn=>{btn.onclick=()=>{const wrap=btn.closest(".multiRows");if(wrap&&wrap.querySelectorAll(".multiRow").length<=1)return toast("Minimal harus ada satu baris.");btn.closest(".multiRow")?.remove();}});
+    document.querySelectorAll('form[data-kind="allocation"] [data-proc-select]').forEach(sel=>{sel.onchange=()=>syncAllocationHeaderV27(sel.closest('form'));syncAllocationHeaderV27(sel.closest('form'));});
+    [["approvalAllocForm","allocation"],["allocMultiForm","allocation"]].forEach(([id])=>{const f=document.getElementById(id);if(f)f.onsubmit=saveMultiAllocation});
+    [["approvalShipForm","shipments"],["shipMultiForm","shipments"],["approvalRecForm","receipts"],["recMultiForm","receipts"]].forEach(([id,type])=>{const f=document.getElementById(id);if(f){f.onsubmit=e=>saveMultiMovement(e,type);bindMovementAutoV27(f,type)}});
+    bindFormattedInputs();
+  };
+  const prevBindPageV27=bindPage;
+  bindPage = function bindPage(){
+    try{prevBindPageV27();}catch(e){console.warn(e);}
+    document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>editProc(+b.dataset.edit));
+    document.querySelectorAll(".quickApprovalForm").forEach(f=>f.onsubmit=quickApprovalSubmitV27);
+    document.querySelectorAll("[data-open-operational]").forEach(b=>b.onclick=()=>{state.page=b.dataset.openOperational;document.getElementById("modalRoot").innerHTML="";render();});
+    bindMultiForms();
+  };
+  const prevBindApprovalFormsV27=bindApprovalForms;
+  bindApprovalForms = function bindApprovalForms(){
+    try{prevBindApprovalFormsV27();}catch(e){console.warn(e);}
+    document.querySelectorAll(".quickApprovalForm").forEach(f=>f.onsubmit=quickApprovalSubmitV27);
+    bindMultiForms();
+  };
+
+  try{window.dashboard=dashboard;window.input=input;window.saveProc=saveProc;window.procTable=procTable;window.editProc=editProc;window.masa=masa;window.contract=contract;window.contractForm=contractForm;window.allocation=allocation;window.shipping=shipping;window.receiving=receiving;window.approval=approval;window.bindPage=bindPage;window.bindApprovalForms=bindApprovalForms;window.approve=approve;render();}catch(e){console.error("Patch v27 gagal",e);}
+})();
+
+/* === PATCH v28: restore Approval tab display to v26 style while keeping v27 operational flow === */
+(function(){
+  function totalUsulanV28(proc){
+    const stored=Number(proc?.totalUsulan||0);
+    if(stored>0) return stored;
+    return (proc?.allocations||[]).reduce((a,b)=>a+(Number(b.volume)||0),0);
+  }
+  function satuanV28(proc){
+    const fromAlloc=(proc?.allocations||[]).find(a=>a.satuan)?.satuan;
+    return proc?.satuan || fromAlloc || "Unit";
+  }
+  function namaBarangV28(proc){
+    const names=[...(proc?.allocations||[]).map(a=>a.jenisBarang||a.namaBarang), proc?.jenisBarang].filter(Boolean);
+    return [...new Set(names)].join(", ") || "Belum ada barang";
+  }
+  function currentGateV28(proc){
+    try{return gate(proc,proc.currentStep);}catch(e){return {ok:false,msg:"Tahapan belum siap."};}
+  }
+  function currentActionV28(proc){
+    if(!proc || proc.currentStep>=STEPS.length) return `<span class="badge green">Selesai</span>`;
+    const st=STEPS[proc.currentStep], g=currentGateV28(proc);
+    if(!isPic(st)) return `<span class="badge gray">PIC: ${esc(st?.pic||"-")}</span>`;
+    if(g.ok) return `<button type="button" class="btn primary small" data-approve="${proc.id}">Approve</button>`;
+    return `<button type="button" class="btn secondary small" data-approval-detail="${proc.id}">Lengkapi</button>`;
+  }
+  function approvalCompactListV28(rows){
+    if(!rows.length) return `<div class="card empty">Tidak ada approval yang menjadi PIC Anda saat ini.</div>`;
+    return `<div class="approvalCompactList approvalV26Restored">${rows.map(proc=>{
+      const st=STEPS[proc.currentStep], ps=status(proc), du=due(proc);
+      return `<div class="approvalCompactRow">
+        <button type="button" class="approvalNameClick" data-approval-detail="${proc.id}" title="Klik untuk membuka detail approval">
+          <b>${esc(proc.nama)}</b>
+          <span>${esc(proc.bidang)} • ${esc(proc.jenisPengadaan)} • Total usulan ${numID(totalUsulanV28(proc))} ${esc(satuanV28(proc))}</span>
+          <small>Nama barang: ${esc(namaBarangV28(proc))}</small>
+        </button>
+        <div class="approvalMeta"><span class="badge ${ps.color}">${esc(ps.text)}</span><span class="badge ${du.color}">${esc(du.text)}</span></div>
+        <div class="approvalStepNow"><small>Tahapan aktif</small><b>${st?esc(st.title):"Selesai"}</b><span>PIC: ${st?esc(st.pic):"-"}</span></div>
+        <div class="approvalCompactAction">${currentActionV28(proc)}</div>
+      </div>`;
+    }).join("")}</div>`;
+  }
+
+  approval = function approval(){
+    const apps=vis().filter(x=>x.currentStep<STEPS.length && isPic(STEPS[x.currentStep]));
+    return `<div class="head" style="margin-top:0"><div><h2>Antrian Approval Anda</h2><small>Tampilan dikembalikan seperti v26: daftar ringkas, nama pengadaan klikable, dan detail approval memakai alur vertikal/minimize.</small></div></div>
+      <div class="help ok"><b>Mode v26:</b> klik nama pengadaan untuk membuka detail approval. Gunakan tombol Lengkapi untuk upload dokumen/foto, atau tombol Approve jika syarat tahapan sudah lengkap.</div>
+      <br>${approvalCompactListV28(apps)}`;
+  };
+
+  const prevBindPageV28=bindPage;
+  bindPage=function bindPage(){
+    try{prevBindPageV28();}catch(e){console.warn(e);}
+    document.querySelectorAll('[data-approval-detail]').forEach(btn=>{
+      btn.onclick=()=>detail(+btn.dataset.approvalDetail);
+    });
+    document.querySelectorAll('[data-approve]').forEach(btn=>{
+      btn.onclick=()=>approve(+btn.dataset.approve);
+    });
+  };
+
+  const prevBindApprovalFormsV28=bindApprovalForms;
+  bindApprovalForms=function bindApprovalForms(){
+    try{prevBindApprovalFormsV28();}catch(e){console.warn(e);}
+    document.querySelectorAll('[data-approval-detail]').forEach(btn=>{
+      btn.onclick=()=>detail(+btn.dataset.approvalDetail);
+    });
+    document.querySelectorAll('[data-approve]').forEach(btn=>{
+      btn.onclick=()=>approve(+btn.dataset.approve);
+    });
+  };
+
+  try{
+    window.approval=approval;
+    window.bindPage=bindPage;
+    window.bindApprovalForms=bindApprovalForms;
+    render();
+  }catch(e){console.error('Patch v28 approval v26 style gagal', e);}
+})();
+
+/* === PATCH v29: Alokasi KPH berbasis Satuan Kerja dengan multi Nama Barang === */
+(function(){
+  function termOptionsV29(selected="Termin I"){
+    return ["Langsung","Termin I","Termin II","Termin III"].map(t=>`<option ${selected===t?"selected":""}>${esc(t)}</option>`).join("");
+  }
+  function allocationHeaderV29(proc){return `<div class="formGrid allocHeaderV27"><div class="field"><label>Vendor</label><input name="vendor" data-vendor-field readonly value="${esc(proc?.vendor||"")}" placeholder="Otomatis dari Masa Pelaksanaan"></div><div class="field"><label>No PKS</label><input name="noPks" data-nopks-field readonly required value="${esc(proc?.contract?.noPks||"")}" placeholder="${esc(proc?.contract?.noPks?"Otomatis dari Masa Pelaksanaan":"Isi No PKS terlebih dahulu di Masa Pelaksanaan")}"></div><div class="field"><label>Tanggal PKS</label><input name="tanggalPks" data-tglpks-field readonly value="${esc(isoToID(proc?.contract?.tanggalPks)||"")}" placeholder="Otomatis dari Masa Pelaksanaan"></div><div class="field"><label>Tahun PKS</label><input name="tahunPks" class="num-id" inputmode="numeric" value="${new Date().getFullYear()}"></div></div>`;}
+  function dateDiffV29(a,b){return Math.floor((new Date(b)-new Date(a))/(864e5));}
+  function modalOpenV29(){return !!document.querySelector('.modalBack');}
+  function namaBarangListV29(proc){const names=[...(proc?.allocations||[]).map(a=>a.jenisBarang||a.namaBarang),proc?.jenisBarang].filter(Boolean);return [...new Set(names)].join(', ')||'';}
+  function allocationItemTemplateV29(values={}){
+    return `<div class="allocationItemRow multiRowInner">
+      <div class="rowHeader compact"><b>Nama Barang</b><button type="button" class="btn danger small" data-remove-allocation-item>Hapus Barang</button></div>
+      <div class="formGrid">
+        <div class="field"><label>Nama Barang</label><input name="jenisBarang" required value="${esc(values.jenisBarang||values.namaBarang||"")}" placeholder="Contoh: APAR / Laptop / Printer"></div>
+        <div class="field"><label>Satuan</label><input name="satuan" required value="${esc(values.satuan||"Unit")}" placeholder="Unit / Set / Paket"></div>
+        <div class="field"><label>Tarif (Rp)</label><input name="tarif" class="num-id" inputmode="numeric" required value="${values.tarif?numID(values.tarif):""}" placeholder="0"></div>
+        <div class="field"><label>Volume Barang</label><input name="volume" class="num-id" inputmode="numeric" required value="${values.volume?numID(values.volume):""}" placeholder="0"></div>
+        <div class="field"><label>Nilai</label><input disabled data-nilai-preview placeholder="Otomatis = Tarif x Volume"></div>
+      </div>
+    </div>`;
+  }
+  function allocationGroupTemplateV29(values={}){
+    const items=(values.items&&values.items.length?values.items:[values]).filter(Boolean);
+    return `<div class="multiRow allocationGroup" data-allocation-group>
+      <div class="rowHeader allocationGroupHeader">
+        <div><b>Satuan Kerja</b><small>Isi nama satuan kerja, lalu tambahkan satu atau lebih Nama Barang di bawahnya.</small></div>
+        <button type="button" class="btn danger small" data-remove-allocation-group>Hapus Satuan Kerja</button>
+      </div>
+      <div class="formGrid allocationGroupFields">
+        <div class="field full"><label>Nama Satuan Kerja</label><input name="satuanKerja" required value="${esc(values.satuanKerja||"")}" placeholder="Contoh: KPH Bandung / KPH Bogor"></div>
+        <div class="field"><label>Termin</label><select name="termin">${termOptionsV29(values.termin||"Termin I")}</select></div>
+        <div class="field"><label>Tanggal Mulai</label><input name="tanggalMulai" class="date-id" inputmode="numeric" required value="${esc(isoToID(values.tanggalMulai)||"")}" placeholder="DD/MM/YYYY"></div>
+        <div class="field"><label>Tanggal Akhir</label><input name="tanggalAkhir" class="date-id" inputmode="numeric" required value="${esc(isoToID(values.tanggalAkhir)||"")}" placeholder="DD/MM/YYYY"></div>
+      </div>
+      <div class="allocationItems" data-allocation-items>${items.map(it=>allocationItemTemplateV29(it)).join("")}</div>
+      <div class="multiToolbar innerToolbar"><button type="button" class="btn ghost small" data-add-allocation-item>+ Tambah Nama Barang pada Satuan Kerja Ini</button></div>
+    </div>`;
+  }
+  function selectedProcForAllocationV29(form){return selectedProcFromForm(form) || vis().filter(spmk)[0] || null;}
+  function allocationHeaderHelpV29(proc){
+    if(!proc) return "Pilih pengadaan terlebih dahulu.";
+    return proc.contract?.noPks ? `No PKS ${proc.contract.noPks} otomatis dari Masa Pelaksanaan.` : "Lengkapi Masa Pelaksanaan agar No PKS tersedia.";
+  }
+  multiAllocationForm = function multiAllocationForm(proc=null, formId="allocMultiForm"){
+    const rows=proc?[proc]:vis().filter(spmk);
+    if(!rows.length) return `<div class="empty">Belum ada pengadaan yang mencapai SPMK.</div>`;
+    const selected=proc?.id||rows[0].id, p0=proc||rows[0];
+    return `<form id="${formId}" class="multiForm allocationSatkerForm" data-kind="allocation">
+      <div class="formGrid">
+        <div class="field full"><label>Pengadaan</label><select name="procId" data-proc-select ${proc?"disabled":""}>${rows.map(p=>`<option value="${p.id}" ${p.id===selected?"selected":""}>${esc(p.nama)}</option>`).join("")}</select>${proc?`<input type="hidden" name="procId" value="${proc.id}">`:""}</div>
+      </div>
+      ${allocationHeaderV29(p0)}
+      <div class="help ok allocationSatkerHelp"><b>Format baru:</b> isi satu Nama Satuan Kerja, lalu tambahkan beberapa Nama Barang di dalam satuan kerja tersebut. Setiap barang memiliki Satuan, Tarif, Volume Barang, dan Nilai otomatis.</div>
+      <div class="multiRows allocationGroupRows" data-container="allocation">${allocationGroupTemplateV29()}</div>
+      <div class="multiToolbar"><button type="button" class="btn ghost small" data-add-allocation-group>+ Tambah Satuan Kerja</button><button class="btn primary" type="submit">Simpan Semua Alokasi</button></div>
+      <div class="help" style="margin-top:12px">${esc(allocationHeaderHelpV29(p0))}</div>
+    </form>`;
+  };
+  allocationRowTemplate = allocationGroupTemplateV29;
+
+  function updateAllocationItemNilaiV29(item){
+    const tarif=parseNumID(item.querySelector('[name="tarif"]')?.value||0);
+    const volume=parseNumID(item.querySelector('[name="volume"]')?.value||0);
+    const nilai=item.querySelector('[data-nilai-preview]');
+    if(nilai) nilai.value=tarif&&volume?rp(tarif*volume):"";
+  }
+  function bindAllocationNilaiV29(scope=document){
+    scope.querySelectorAll?.('.allocationItemRow').forEach(item=>{
+      ['input','change'].forEach(ev=>{
+        item.querySelector('[name="tarif"]')?.addEventListener(ev,()=>updateAllocationItemNilaiV29(item));
+        item.querySelector('[name="volume"]')?.addEventListener(ev,()=>updateAllocationItemNilaiV29(item));
+      });
+      updateAllocationItemNilaiV29(item);
+    });
+  }
+  function readAllocationGroupsV29(form){
+    return [...form.querySelectorAll('[data-allocation-group]')].flatMap(group=>{
+      const groupValue=name=>group.querySelector(`.allocationGroupFields [name="${name}"]`)?.value?.trim()||"";
+      const satuanKerja=groupValue('satuanKerja');
+      const termin=groupValue('termin')||"Termin I";
+      const tanggalMulai=idToISO(groupValue('tanggalMulai'));
+      const tanggalAkhir=idToISO(groupValue('tanggalAkhir'));
+      return [...group.querySelectorAll('.allocationItemRow')].map(item=>{
+        const q=name=>item.querySelector(`[name="${name}"]`)?.value?.trim()||"";
+        return {satuanKerja,termin,tanggalMulai,tanggalAkhir,jenisBarang:q('jenisBarang'),namaBarang:q('jenisBarang'),satuan:q('satuan'),tarif:parseNumID(q('tarif')),volume:parseNumID(q('volume'))};
+      });
+    }).filter(r=>r.satuanKerja||r.jenisBarang||r.volume||r.tarif);
+  }
+  const readRowsBeforeV29=readRows;
+  readRows = function readRows(form,selector){
+    if(selector===".allocationRow" || form?.dataset?.kind==="allocation") return readAllocationGroupsV29(form);
+    return readRowsBeforeV29(form,selector);
+  };
+  saveMultiAllocation = function saveMultiAllocation(e){
+    e.preventDefault();
+    const form=e.target, data=fd(form), proc=db.procurements.find(p=>p.id===+data.procId);
+    if(!proc) return toast("Pengadaan tidak ditemukan.");
+    if(!spmk(proc)) return toast("Alokasi hanya dapat diisi setelah SPMK.");
+    if(!contractOk(proc)) return toast("Lengkapi Masa Pelaksanaan terlebih dahulu agar No PKS tersedia.");
+    if(!can("Alokasi KPH","tambah")&&!isPic(STEPS[proc.currentStep])) return toast("Anda tidak dapat mengisi alokasi.");
+    const rows=readAllocationGroupsV29(form);
+    if(!rows.length) return toast("Minimal isi satu Satuan Kerja dan satu Nama Barang.");
+    for(const r of rows){
+      if(!r.satuanKerja||!r.termin||!r.tanggalMulai||!r.tanggalAkhir) return toast("Setiap Satuan Kerja wajib memiliki Nama Satuan Kerja, Termin, Tanggal Mulai, dan Tanggal Akhir.");
+      if(!r.jenisBarang||!r.satuan||!r.tarif||!r.volume) return toast("Setiap Nama Barang wajib memiliki Nama Barang, Satuan, Tarif, dan Volume Barang.");
+      if(dateDiffV29(r.tanggalMulai,r.tanggalAkhir)<0) return toast("Tanggal akhir alokasi tidak boleh sebelum tanggal mulai.");
+    }
+    rows.forEach(r=>proc.allocations.push(alloc(proc.vendor,proc.contract.noPks,proc.contract.tanggalPks,r.termin,r.tanggalMulai,r.tanggalAkhir,r.satuanKerja,r.jenisBarang,r.satuan,r.tarif,r.volume,parseNumID(data.tahunPks)||new Date().getFullYear())));
+    proc.totalUsulan=proc.allocations.reduce((a,b)=>a+(Number(b.volume)||0),0);
+    proc.satuan=proc.allocations[0]?.satuan||proc.satuan||"Unit";
+    proc.jenisBarang=namaBarangListV29(proc);
+    save();
+    const satkerCount=new Set(rows.map(r=>r.satuanKerja)).size;
+    toast(`${numID(rows.length)} barang dari ${numID(satkerCount)} satuan kerja berhasil disimpan.`);
+    modalOpenV29()?detail(proc.id):render();
+  };
+  allocation = function allocation(){
+    const rows=vis().filter(spmk);
+    return `<div class="help ok"><b>Alokasi berbasis Satuan Kerja:</b> No PKS otomatis dari Masa Pelaksanaan. Di setiap Satuan Kerja, pengguna dapat mengisi lebih dari satu Nama Barang lengkap dengan Satuan, Tarif, Volume Barang, dan Nilai.</div><div class="card pad" style="margin-top:14px"><h2 style="margin-top:0">Form Alokasi Barang Per Satuan Kerja</h2>${can("Alokasi KPH","tambah")?multiAllocationForm(null,"allocMultiForm"):`<div class="help warn">Role Anda tidak dapat menambah alokasi.</div>`}</div><div class="head"><h2>Data Alokasi</h2></div>${allocTable(rows)}`;
+  };
+  allocTable = function allocTable(rows){
+    let list=[];rows.forEach(proc=>(proc.allocations||[]).forEach((a,i)=>list.push({proc,_idx:i,...a})));
+    if(!list.length)return`<div class="card empty">Belum ada alokasi.</div>`;
+    return`<div class="tableWrap"><table><thead><tr><th>Pengadaan</th><th>Vendor</th><th>No PKS</th><th>Satuan Kerja</th><th>Termin</th><th>Tgl Mulai</th><th>Tgl Akhir</th><th>Nama Barang</th><th>Satuan</th><th>Tarif</th><th>Volume</th><th>Nilai</th></tr></thead><tbody>${list.map(x=>`<tr><td data-label="Pengadaan"><b>${esc(x.proc.nama)}</b></td><td data-label="Vendor">${esc(x.vendor)}</td><td data-label="No PKS">${esc(x.noPks)}</td><td data-label="Satuan Kerja"><b>${esc(x.satuanKerja)}</b></td><td data-label="Termin">${esc(x.termin)}</td><td data-label="Tgl Mulai">${d(x.tanggalMulai)}</td><td data-label="Tgl Akhir">${d(x.tanggalAkhir)}</td><td data-label="Nama Barang">${esc(x.jenisBarang)}</td><td data-label="Satuan">${esc(x.satuan||"")}</td><td data-label="Tarif">${rp(x.tarif)}</td><td data-label="Volume">${numID(x.volume)} ${esc(x.satuan||"")}</td><td data-label="Nilai">${rp(x.nilai)}</td></tr>`).join("")}</tbody></table></div>`;
+  };
+  function bindAllocationGroupsV29(){
+    document.querySelectorAll('[data-add-allocation-group]').forEach(btn=>{btn.onclick=()=>{const form=btn.closest('form'),box=form.querySelector('[data-container="allocation"]');box.insertAdjacentHTML('beforeend',allocationGroupTemplateV29());bindMultiForms();bindFormattedInputs(form);bindAllocationNilaiV29(form);};});
+    document.querySelectorAll('[data-add-allocation-item]').forEach(btn=>{btn.onclick=()=>{const group=btn.closest('[data-allocation-group]'),box=group.querySelector('[data-allocation-items]');box.insertAdjacentHTML('beforeend',allocationItemTemplateV29());bindMultiForms();bindFormattedInputs(group);bindAllocationNilaiV29(group);};});
+    document.querySelectorAll('[data-remove-allocation-item]').forEach(btn=>{btn.onclick=()=>{const group=btn.closest('[data-allocation-group]');if(group.querySelectorAll('.allocationItemRow').length<=1)return toast('Minimal satu barang pada setiap Satuan Kerja.');btn.closest('.allocationItemRow')?.remove();};});
+    document.querySelectorAll('[data-remove-allocation-group]').forEach(btn=>{btn.onclick=()=>{const wrap=btn.closest('.multiRows');if(wrap&&wrap.querySelectorAll('[data-allocation-group]').length<=1)return toast('Minimal harus ada satu Satuan Kerja.');btn.closest('[data-allocation-group]')?.remove();};});
+    document.querySelectorAll('form[data-kind="allocation"] [data-proc-select]').forEach(sel=>{sel.onchange=()=>syncAllocationHeaderV27(sel.closest('form'));syncAllocationHeaderV27(sel.closest('form'));});
+    bindAllocationNilaiV29(document);
+  }
+  const bindMultiFormsBeforeV29=bindMultiForms;
+  bindMultiForms = function bindMultiForms(){
+    try{bindMultiFormsBeforeV29();}catch(e){console.warn(e);}
+    document.querySelectorAll('[data-add-allocation-row]').forEach(btn=>{btn.onclick=()=>{const form=btn.closest('form'),box=form.querySelector('[data-container="allocation"]');box.insertAdjacentHTML('beforeend',allocationGroupTemplateV29());bindMultiForms();bindFormattedInputs(form);bindAllocationNilaiV29(form);};});
+    [["approvalAllocForm","allocation"],["allocMultiForm","allocation"]].forEach(([id])=>{const f=document.getElementById(id);if(f)f.onsubmit=saveMultiAllocation;});
+    bindAllocationGroupsV29();
+  };
+  const bindPageBeforeV29=bindPage;
+  bindPage = function bindPage(){
+    try{bindPageBeforeV29();}catch(e){console.warn(e);}
+    bindMultiForms();
+  };
+  const bindApprovalFormsBeforeV29=bindApprovalForms;
+  bindApprovalForms = function bindApprovalForms(){
+    try{bindApprovalFormsBeforeV29();}catch(e){console.warn(e);}
+    bindMultiForms();
+  };
+  try{window.multiAllocationForm=multiAllocationForm;window.allocationRowTemplate=allocationRowTemplate;window.saveMultiAllocation=saveMultiAllocation;window.allocation=allocation;window.allocTable=allocTable;window.bindMultiForms=bindMultiForms;window.bindPage=bindPage;window.bindApprovalForms=bindApprovalForms;render();}catch(e){console.error('Patch v29 Alokasi Satuan Kerja Multi Barang gagal',e);}
 })();
