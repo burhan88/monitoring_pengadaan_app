@@ -160,3 +160,13 @@ input[type="file"]{padding:9px;background:#fff}
 .compactApprovalModalV35 .approvalVerticalWrap{display:none!important}
 .compactApprovalModalV35 .approvalOpenBannerV34{display:none!important}
 @media(max-width:720px){.approvalStepSingleV35{grid-template-columns:1fr}.singleStepNumberV35{width:38px;height:38px}.approvalOnlyActionV35{justify-content:stretch}.approvalOnlyActionV35 .btn{width:100%}}
+
+/* === PATCH v37: editor hari, bulan, tahun pada popup tanggal === */
+.mpbDatePickerV37{width:min(390px,calc(100vw - 28px))}
+.mpbDatePickerTopV37{padding-bottom:16px}
+.mpbDateEditorV37{display:grid;grid-template-columns:82px 1fr 110px;gap:10px;padding:14px 20px 4px;background:#fff;border-bottom:1px solid var(--line)}
+.mpbDateEditorV37 label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:900;color:#475569;letter-spacing:.02em}
+.mpbDateEditorV37 input,.mpbDateEditorV37 select{height:42px;border:1px solid var(--line);border-radius:12px;padding:0 10px;background:#fff;color:var(--text);font:inherit;font-weight:800;outline:none}
+.mpbDateEditorV37 input:focus,.mpbDateEditorV37 select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.14)}
+.mpbDateCalendarV37{padding-top:14px}
+@media(max-width:420px){.mpbDatePickerV37{width:100%}.mpbDateEditorV37{grid-template-columns:1fr;gap:8px;padding:12px 16px 4px}.mpbDateEditorV37 input,.mpbDateEditorV37 select{height:40px}}
