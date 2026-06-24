@@ -2784,3 +2784,328 @@ render();
     render();
   }catch(e){console.error('Patch v31 gagal',e);}
 })();
+
+
+/* === PATCH v32: pemilih tanggal otomatis native browser === */
+(function(){
+  function dateDiffV32(a,b){
+    const da=new Date(`${a}T00:00:00`), dbb=new Date(`${b}T00:00:00`);
+    return Math.floor((dbb-da)/864e5);
+  }
+  function modalOpenV32(){return !!document.querySelector('.modalBack');}
+  function contractForV32(proc){
+    proc.contract=proc.contract||{noPks:"",tanggalPks:"",tanggalMulai:"",tanggalAkhir:"",keterangan:""};
+    return proc.contract;
+  }
+  function toDateInputValue(v){
+    const iso=typeof idToISO==="function"?idToISO(v):"";
+    if(iso) return iso;
+    const s=String(v||"").trim();
+    const m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m?`${m[1]}-${m[2]}-${m[3]}`:"";
+  }
+  function dateInputV32(name,id,value,required=false,extra=""){
+    return `<input name="${esc(name)}" id="${esc(id)}" type="date" ${required?"required":""} value="${esc(toDateInputValue(value))}" ${extra}>`;
+  }
+  function nativeDateFieldV32(name,value,required=true){
+    return `<input name="${esc(name)}" type="date" ${required?"required":""} value="${esc(toDateInputValue(value))}">`;
+  }
+  function namaBarangListV32(proc){
+    const names=[...(proc?.allocations||[]).map(a=>a.jenisBarang||a.namaBarang),proc?.jenisBarang].filter(Boolean);
+    return [...new Set(names)].join(', ')||'-';
+  }
+
+  const bindFormattedInputsBeforeV32=bindFormattedInputs;
+  bindFormattedInputs = function bindFormattedInputs(scope=document){
+    try{
+      scope.querySelectorAll?.('.num-id').forEach(el=>{
+        el.oninput=()=>{
+          el.value=numID(parseNumID(el.value));
+          try{el.setSelectionRange(el.value.length,el.value.length)}catch(e){}
+        };
+      });
+      scope.querySelectorAll?.('input.date-id').forEach(el=>{
+        const iso=toDateInputValue(el.value);
+        try{el.type='date';}catch(e){}
+        el.classList.remove('date-id');
+        el.removeAttribute('inputmode');
+        el.removeAttribute('placeholder');
+        if(iso) el.value=iso;
+        el.oninput=null;
+      });
+    }catch(e){
+      try{bindFormattedInputsBeforeV32(scope);}catch(err){console.warn(err);}
+    }
+  };
+  function enhanceNativeDateInputsV32(scope=document){
+    try{bindFormattedInputs(scope);}catch(e){}
+  }
+
+  contractOptionData = function contractOptionData(proc){
+    const c=contractForV32(proc);
+    return `data-vendor="${esc(proc.vendor||"")}" data-nopks="${esc(c.noPks||"")}" data-tglpks="${esc(toDateInputValue(c.tanggalPks))}" data-tglmulai="${esc(toDateInputValue(c.tanggalMulai))}" data-tglakhir="${esc(toDateInputValue(c.tanggalAkhir))}" data-keterangan="${esc(c.keterangan||"")}"`;
+  };
+  contractForm = function contractForm(rows,selectedId=""){
+    if(!rows.length) return `<div class="empty">Belum ada pengadaan yang mencapai SPMK.</div>`;
+    const selected=+selectedId||rows[0].id;
+    const selectedProc=rows.find(p=>p.id===selected)||rows[0];
+    const c=contractForV32(selectedProc);
+    return `<form id="contractForm" data-contract-form-v32>
+      <div class="formGrid">
+        <div class="field"><label>Pengadaan</label><select name="procId" id="contractProc" required>${rows.map(proc=>`<option value="${proc.id}" ${+selected===proc.id?"selected":""} ${contractOptionData(proc)}>${esc(proc.nama)}</option>`).join("")}</select></div>
+        <div class="field"><label>Vendor Bertanggung Jawab</label><input name="vendor" id="contractVendor" required placeholder="Nama vendor" value="${esc(selectedProc.vendor||"")}"></div>
+        <div class="field"><label>No PKS</label><input name="noPks" id="contractNoPks" required placeholder="Nomor PKS" value="${esc(c.noPks||"")}"></div>
+        <div class="field"><label>Tanggal PKS</label>${dateInputV32("tanggalPks","contractTanggalPks",c.tanggalPks,false)}</div>
+        <div class="field"><label>Tanggal Mulai Kontrak</label>${dateInputV32("tanggalMulai","contractTanggalMulai",c.tanggalMulai,true)}</div>
+        <div class="field"><label>Tanggal Akhir Kontrak</label>${dateInputV32("tanggalAkhir","contractTanggalAkhir",c.tanggalAkhir,true)}</div>
+        <div class="field"><label>Durasi Hari Efektif</label><input id="contractDurasi" disabled placeholder="Otomatis dari tanggal mulai dan akhir"></div>
+        <div class="field"><label>Status Tata Waktu</label><input id="contractStatusText" disabled placeholder="Otomatis hari kerja efektif"></div>
+        <div class="field full"><label>Keterangan Masa Pelaksanaan</label><textarea name="keterangan" id="contractKeterangan" placeholder="Catatan masa pelaksanaan pekerjaan">${esc(c.keterangan||"")}</textarea></div>
+        <div class="field full"><button class="btn primary">Simpan Masa Pelaksanaan</button></div>
+      </div>
+    </form>`;
+  };
+  refreshContractForm = function refreshContractForm(){
+    const sel=document.getElementById("contractProc");
+    if(!sel) return;
+    const proc=db.procurements.find(p=>p.id===+sel.value);
+    if(!proc) return;
+    const c=contractForV32(proc);
+    const set=(id,v)=>{const el=document.getElementById(id); if(el) el.value=v||"";};
+    set("contractVendor",proc.vendor||"");
+    set("contractNoPks",c.noPks||"");
+    set("contractTanggalPks",toDateInputValue(c.tanggalPks));
+    set("contractTanggalMulai",toDateInputValue(c.tanggalMulai));
+    set("contractTanggalAkhir",toDateInputValue(c.tanggalAkhir));
+    set("contractKeterangan",c.keterangan||"");
+    updateContractPreview();
+  };
+  updateContractPreview = function updateContractPreview(){
+    const mulai=toDateInputValue(document.getElementById("contractTanggalMulai")?.value), akhir=toDateInputValue(document.getElementById("contractTanggalAkhir")?.value), dur=document.getElementById("contractDurasi"), stat=document.getElementById("contractStatusText");
+    if(!dur||!stat) return;
+    if(!mulai||!akhir){dur.value=""; stat.value="Pilih tanggal mulai dan tanggal akhir"; return;}
+    const fake={contract:{tanggalMulai:mulai,tanggalAkhir:akhir}};
+    const n=contractDuration(fake);
+    dur.value=dateDiffV32(mulai,akhir)>=0?`${numID(n)} hari kerja efektif`:"Tanggal akhir harus setelah/sama dengan mulai";
+    stat.value=contractStatus(fake).text;
+  };
+  saveContractForm = function saveContractForm(e){
+    e.preventDefault();
+    const data=fd(e.target), proc=db.procurements.find(p=>p.id===+data.procId);
+    if(!proc) return toast("Pengadaan tidak ditemukan.");
+    if(!spmk(proc)) return toast("Masa Pelaksanaan baru dapat diisi setelah SPMK.");
+    const tanggalPks=toDateInputValue(data.tanggalPks), tanggalMulai=toDateInputValue(data.tanggalMulai), tanggalAkhir=toDateInputValue(data.tanggalAkhir);
+    if(!data.vendor||!data.noPks||!tanggalMulai||!tanggalAkhir) return toast("Vendor, No PKS, tanggal mulai, dan tanggal akhir wajib dipilih.");
+    if(dateDiffV32(tanggalMulai,tanggalAkhir)<0) return toast("Tanggal akhir kontrak tidak boleh sebelum tanggal mulai.");
+    proc.vendor=data.vendor.trim();
+    proc.contract={...(proc.contract||{}),noPks:data.noPks.trim(),tanggalPks,tanggalMulai,tanggalAkhir,keterangan:data.keterangan||""};
+    delete proc.contract.tanggalPerjanjian;
+    save();
+    toast("Masa Pelaksanaan berhasil disimpan.");
+    const modal=document.getElementById("modalRoot"); if(modal) modal.innerHTML="";
+    render();
+  };
+  bindContractForm = function bindContractForm(){
+    const cf=document.getElementById("contractForm");
+    if(!cf) return;
+    cf.onsubmit=saveContractForm;
+    const sel=document.getElementById("contractProc");
+    if(sel) sel.onchange=refreshContractForm;
+    ["contractTanggalPks","contractTanggalMulai","contractTanggalAkhir"].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.oninput=updateContractPreview;
+    });
+    refreshContractForm();
+  };
+  masa = function masa(){
+    const rows=vis().filter(spmk);
+    return `<div class="help ok"><b>Pemilih tanggal otomatis:</b> klik field tanggal untuk memilih tanggal dari kalender. Masa Pelaksanaan tetap otomatis memuat data lama saat diedit.</div><div class="card pad" style="margin-top:14px"><div class="head" style="margin-top:0"><h2>Input Masa Pelaksanaan Pekerjaan</h2></div>${can("Masa Pelaksanaan","edit")?contractForm(rows):`<div class="help warn">Role Anda tidak dapat mengisi masa pelaksanaan.</div>`}</div><div class="head"><h2>Pengadaan Setelah SPMK</h2></div>${rows.length?`<div class="tableWrap"><table><thead><tr><th>Pengadaan</th><th>Vendor</th><th>No PKS</th><th>Tanggal PKS</th><th>Mulai</th><th>Akhir</th><th>Durasi Hari Efektif</th><th>Tata Waktu</th><th>Aksi</th></tr></thead><tbody>${rows.map(proc=>{const c=contractForV32(proc), cs=contractStatus(proc);return `<tr><td data-label="Pengadaan"><b>${esc(proc.nama)}</b><br><small>${esc(proc.bidang)}</small></td><td data-label="Vendor">${esc(proc.vendor||"-")}</td><td data-label="No PKS">${esc(c.noPks||"-")}</td><td data-label="Tanggal PKS">${d(c.tanggalPks)}</td><td data-label="Mulai">${d(c.tanggalMulai)}</td><td data-label="Akhir">${d(c.tanggalAkhir)}</td><td data-label="Durasi">${numID(contractDuration(proc)||0)} hari kerja</td><td data-label="Tata Waktu"><span class="badge ${cs.color}">${esc(cs.text)}</span></td><td data-label="Aksi">${can("Masa Pelaksanaan","edit")?`<button type="button" class="btn primary small" data-contract="${proc.id}">Isi/Edit</button>`:"-"}</td></tr>`}).join("")}</tbody></table></div>`:`<div class="card empty">Belum ada pengadaan yang mencapai SPMK.</div>`}`;
+  };
+  contract = function contract(id){
+    const rows=vis().filter(spmk), proc=db.procurements.find(p=>p.id===+id);
+    if(!proc||!spmk(proc)) return toast("Masa Pelaksanaan baru dapat diisi setelah SPMK.");
+    document.getElementById("modalRoot").innerHTML=`<div class="modalBack"><div class="modal"><div class="modalHead"><div><h2>Edit Masa Pelaksanaan Pekerjaan</h2><small>${esc(proc.nama)} • tanggal dapat dipilih dari kalender</small></div><button type="button" class="btn ghost small" id="closeContractModal">Tutup</button></div><div class="modalBody"><div class="help ok">Data lama tetap otomatis dimuat. Klik field tanggal untuk membuka pemilih tanggal.</div><div style="height:14px"></div>${contractForm(rows,id)}</div></div></div>`;
+    document.getElementById("closeContractModal").onclick=()=>document.getElementById("modalRoot").innerHTML="";
+    bindContractForm();
+  };
+
+  function allocationHeaderV32(proc){
+    return `<div class="formGrid allocHeaderV27"><div class="field"><label>Vendor</label><input name="vendor" data-vendor-field readonly value="${esc(proc?.vendor||"")}" placeholder="Otomatis dari Masa Pelaksanaan"></div><div class="field"><label>No PKS</label><input name="noPks" data-nopks-field readonly required value="${esc(proc?.contract?.noPks||"")}" placeholder="${esc(proc?.contract?.noPks?"Otomatis dari Masa Pelaksanaan":"Isi No PKS terlebih dahulu di Masa Pelaksanaan")}"></div><div class="field"><label>Tanggal PKS</label><input name="tanggalPks" data-tglpks-field readonly type="date" value="${esc(toDateInputValue(proc?.contract?.tanggalPks))}"></div><div class="field"><label>Tahun PKS</label><input name="tahunPks" class="num-id" inputmode="numeric" value="${new Date().getFullYear()}"></div></div>`;
+  }
+  function termOptionsV32(selected="Termin I"){
+    return ["Langsung","Termin I","Termin II","Termin III"].map(t=>`<option ${selected===t?"selected":""}>${esc(t)}</option>`).join("");
+  }
+  function allocationItemRowTemplateV32(values={}){
+    return `<tr class="allocationItemRow">
+      <td data-label="Nama Barang"><input name="jenisBarang" required value="${esc(values.jenisBarang||values.namaBarang||"")}" placeholder="Contoh: APAR / Laptop"></td>
+      <td data-label="Satuan"><input name="satuan" required value="${esc(values.satuan||"Unit")}" placeholder="Unit / Set / Paket"></td>
+      <td data-label="Tarif"><input name="tarif" class="num-id" inputmode="numeric" required value="${values.tarif?numID(values.tarif):""}" placeholder="0"></td>
+      <td data-label="Volume Barang"><input name="volume" class="num-id" inputmode="numeric" required value="${values.volume?numID(values.volume):""}" placeholder="0"></td>
+      <td data-label="Nilai"><input disabled data-nilai-preview placeholder="Otomatis" value="${values.tarif&&values.volume?rp(Number(values.tarif)*Number(values.volume)):""}"></td>
+      <td data-label="Aksi"><button type="button" class="btn danger small" data-remove-allocation-item>Hapus</button></td>
+    </tr>`;
+  }
+  function allocationGroupTemplateV32(values={}){
+    const items=(values.items&&values.items.length?values.items:[values]).filter(Boolean);
+    return `<div class="multiRow allocationGroup allocationTableGroup" data-allocation-group>
+      <div class="rowHeader allocationGroupHeader"><div><b>Satuan Kerja</b><small>Isi identitas satuan kerja, lalu input barang dalam tabel.</small></div><button type="button" class="btn danger small" data-remove-allocation-group>Hapus Satuan Kerja</button></div>
+      <div class="formGrid allocationGroupFields">
+        <div class="field full"><label>Nama Satuan Kerja</label><input name="satuanKerja" required value="${esc(values.satuanKerja||"")}" placeholder="Contoh: KPH Bandung / KPH Bogor"></div>
+        <div class="field"><label>Termin</label><select name="termin">${termOptionsV32(values.termin||"Termin I")}</select></div>
+        <div class="field"><label>Tanggal Mulai</label>${nativeDateFieldV32("tanggalMulai",values.tanggalMulai,true)}</div>
+        <div class="field"><label>Tanggal Akhir</label>${nativeDateFieldV32("tanggalAkhir",values.tanggalAkhir,true)}</div>
+      </div>
+      <div class="allocationItemTableWrap"><table class="allocationItemTable"><thead><tr><th>Nama Barang</th><th>Satuan</th><th>Tarif</th><th>Volume Barang</th><th>Nilai otomatis</th><th>Aksi</th></tr></thead><tbody data-allocation-items>${items.map(it=>allocationItemRowTemplateV32(it)).join("")}</tbody></table></div>
+      <div class="multiToolbar innerToolbar"><button type="button" class="btn ghost small" data-add-allocation-item>+ Tambah Barang</button></div>
+    </div>`;
+  }
+  function selectedProcForAllocationV32(form){return selectedProcFromForm(form)||vis().filter(spmk)[0]||null;}
+  function allocationHeaderHelpV32(proc){if(!proc) return "Pilih pengadaan terlebih dahulu."; return proc.contract?.noPks?`No PKS ${proc.contract.noPks} otomatis dari Masa Pelaksanaan.`:"Lengkapi Masa Pelaksanaan agar No PKS tersedia.";}
+  function syncAllocationHeaderV32(form){
+    const proc=selectedProcForAllocationV32(form); if(!proc||!form) return;
+    const set=(sel,v)=>{const el=form.querySelector(sel); if(el) el.value=v||"";};
+    set('[data-vendor-field]',proc.vendor||"");
+    set('[data-nopks-field]',proc.contract?.noPks||"");
+    set('[data-tglpks-field]',toDateInputValue(proc.contract?.tanggalPks));
+    const help=form.querySelector('[data-allocation-header-help]'); if(help) help.textContent=allocationHeaderHelpV32(proc);
+  }
+  multiAllocationForm = function multiAllocationForm(proc=null,formId="allocMultiForm"){
+    const rows=proc?[proc]:vis().filter(spmk);
+    if(!rows.length) return `<div class="empty">Belum ada pengadaan yang mencapai SPMK.</div>`;
+    const selected=proc?.id||rows[0].id, p0=proc||rows[0];
+    return `<form id="${formId}" class="multiForm" data-kind="allocation"><div class="formGrid"><div class="field full"><label>Pengadaan</label><select name="procId" data-proc-select ${proc?"disabled":""}>${rows.map(p=>`<option value="${p.id}" ${p.id===selected?"selected":""}>${esc(p.nama)}</option>`).join("")}</select>${proc?`<input type="hidden" name="procId" value="${proc.id}">`:""}</div></div>${allocationHeaderV32(p0)}<div class="help ok allocationSatkerHelp"><b>Format v32:</b> tanggal dipilih dari kalender. Barang Alokasi KPH tetap berbentuk tabel dengan Nama Barang, Satuan, Tarif, Volume Barang, Nilai otomatis, dan Aksi.</div><div class="multiRows allocationGroupRows" data-container="allocation">${allocationGroupTemplateV32()}</div><div class="multiToolbar"><button type="button" class="btn ghost small" data-add-allocation-group>+ Tambah Satuan Kerja</button><button class="btn primary" type="submit">Simpan Semua Alokasi</button></div><div class="help" data-allocation-header-help style="margin-top:12px">${esc(allocationHeaderHelpV32(p0))}</div></form>`;
+  };
+  allocationRowTemplate = allocationGroupTemplateV32;
+  function updateAllocationItemNilaiV32(item){
+    const tarif=parseNumID(item.querySelector('[name="tarif"]')?.value||0), volume=parseNumID(item.querySelector('[name="volume"]')?.value||0), nilai=item.querySelector('[data-nilai-preview]');
+    if(nilai) nilai.value=tarif&&volume?rp(tarif*volume):"";
+  }
+  function bindAllocationNilaiV32(scope=document){
+    scope.querySelectorAll?.('.allocationItemRow').forEach(item=>{
+      ['input','change'].forEach(ev=>{
+        item.querySelector('[name="tarif"]')?.addEventListener(ev,()=>updateAllocationItemNilaiV32(item));
+        item.querySelector('[name="volume"]')?.addEventListener(ev,()=>updateAllocationItemNilaiV32(item));
+      });
+      updateAllocationItemNilaiV32(item);
+    });
+  }
+  function readAllocationGroupsV32(form){
+    return [...form.querySelectorAll('[data-allocation-group]')].flatMap(group=>{
+      const groupValue=name=>group.querySelector(`.allocationGroupFields [name="${name}"]`)?.value?.trim()||"";
+      const satuanKerja=groupValue('satuanKerja'), termin=groupValue('termin')||"Termin I", tanggalMulai=toDateInputValue(groupValue('tanggalMulai')), tanggalAkhir=toDateInputValue(groupValue('tanggalAkhir'));
+      return [...group.querySelectorAll('.allocationItemRow')].map(item=>{
+        const q=name=>item.querySelector(`[name="${name}"]`)?.value?.trim()||"";
+        return {satuanKerja,termin,tanggalMulai,tanggalAkhir,jenisBarang:q('jenisBarang'),namaBarang:q('jenisBarang'),satuan:q('satuan'),tarif:parseNumID(q('tarif')),volume:parseNumID(q('volume'))};
+      });
+    }).filter(r=>r.satuanKerja||r.jenisBarang||r.volume||r.tarif);
+  }
+  const readRowsBeforeV32=readRows;
+  readRows = function readRows(form,selector){
+    if(selector===".allocationRow" || form?.dataset?.kind==="allocation") return readAllocationGroupsV32(form);
+    return readRowsBeforeV32(form,selector);
+  };
+  saveMultiAllocation = function saveMultiAllocation(e){
+    e.preventDefault();
+    const form=e.target, data=fd(form), proc=db.procurements.find(p=>p.id===+data.procId);
+    if(!proc) return toast("Pengadaan tidak ditemukan.");
+    if(!spmk(proc)) return toast("Alokasi hanya dapat diisi setelah SPMK.");
+    if(!contractOk(proc)) return toast("Lengkapi Masa Pelaksanaan terlebih dahulu agar No PKS tersedia.");
+    if(!can("Alokasi KPH","tambah")&&!isPic(STEPS[proc.currentStep])) return toast("Anda tidak dapat mengisi alokasi.");
+    const rows=readAllocationGroupsV32(form);
+    if(!rows.length) return toast("Minimal isi satu Satuan Kerja dan satu baris Barang pada tabel.");
+    for(const r of rows){
+      if(!r.satuanKerja||!r.termin||!r.tanggalMulai||!r.tanggalAkhir) return toast("Setiap Satuan Kerja wajib memiliki Nama Satuan Kerja, Termin, Tanggal Mulai, dan Tanggal Akhir.");
+      if(!r.jenisBarang||!r.satuan||!r.tarif||!r.volume) return toast("Setiap baris tabel barang wajib memiliki Nama Barang, Satuan, Tarif, dan Volume Barang.");
+      if(dateDiffV32(r.tanggalMulai,r.tanggalAkhir)<0) return toast("Tanggal akhir alokasi tidak boleh sebelum tanggal mulai.");
+    }
+    rows.forEach(r=>proc.allocations.push(alloc(proc.vendor,proc.contract.noPks,proc.contract.tanggalPks,r.termin,r.tanggalMulai,r.tanggalAkhir,r.satuanKerja,r.jenisBarang,r.satuan,r.tarif,r.volume,parseNumID(data.tahunPks)||new Date().getFullYear())));
+    proc.totalUsulan=proc.allocations.reduce((a,b)=>a+(Number(b.volume)||0),0);
+    proc.satuan=proc.allocations[0]?.satuan||proc.satuan||"Unit";
+    proc.jenisBarang=namaBarangListV32(proc);
+    save();
+    const satkerCount=new Set(rows.map(r=>r.satuanKerja)).size;
+    toast(`${numID(rows.length)} barang dari ${numID(satkerCount)} satuan kerja berhasil disimpan.`);
+    modalOpenV32()?detail(proc.id):render();
+  };
+  allocation = function allocation(){
+    const rows=vis().filter(spmk);
+    return `<div class="help ok"><b>Alokasi KPH v32:</b> tanggal mulai dan akhir dipilih dari kalender. Input barang tetap berbentuk tabel dengan Nilai otomatis.</div><div class="card pad" style="margin-top:14px"><h2 style="margin-top:0">Form Alokasi Barang Per Satuan Kerja</h2>${can("Alokasi KPH","tambah")?multiAllocationForm(null,"allocMultiForm"):`<div class="help warn">Role Anda tidak dapat menambah alokasi.</div>`}</div><div class="head"><h2>Data Alokasi</h2></div>${allocTable(rows)}`;
+  };
+  function bindAllocationGroupsV32(){
+    document.querySelectorAll('[data-add-allocation-group]').forEach(btn=>{btn.onclick=()=>{const form=btn.closest('form'), box=form.querySelector('[data-container="allocation"]'); box.insertAdjacentHTML('beforeend',allocationGroupTemplateV32()); bindMultiForms(); bindFormattedInputs(form); bindAllocationNilaiV32(form);};});
+    document.querySelectorAll('[data-add-allocation-item]').forEach(btn=>{btn.onclick=()=>{const group=btn.closest('[data-allocation-group]'), box=group.querySelector('[data-allocation-items]'); box.insertAdjacentHTML('beforeend',allocationItemRowTemplateV32()); bindMultiForms(); bindFormattedInputs(group); bindAllocationNilaiV32(group);};});
+    document.querySelectorAll('[data-remove-allocation-item]').forEach(btn=>{btn.onclick=()=>{const group=btn.closest('[data-allocation-group]'); if(group.querySelectorAll('.allocationItemRow').length<=1) return toast('Minimal satu barang pada setiap Satuan Kerja.'); btn.closest('.allocationItemRow')?.remove();};});
+    document.querySelectorAll('[data-remove-allocation-group]').forEach(btn=>{btn.onclick=()=>{const wrap=btn.closest('.multiRows'); if(wrap&&wrap.querySelectorAll('[data-allocation-group]').length<=1) return toast('Minimal harus ada satu Satuan Kerja.'); btn.closest('[data-allocation-group]')?.remove();};});
+    document.querySelectorAll('form[data-kind="allocation"] [data-proc-select]').forEach(sel=>{sel.onchange=()=>syncAllocationHeaderV32(sel.closest('form')); syncAllocationHeaderV32(sel.closest('form'));});
+    bindAllocationNilaiV32(document);
+  }
+
+  function allocationOptionsV32(proc){
+    return (proc?.allocations||[]).map((a,i)=>({value:i,label:`${a.satuanKerja||"-"} • ${a.jenisBarang||"Barang"} • ${a.termin||"-"} • ${numID(a.volume||0)} ${a.satuan||""}`,row:a}));
+  }
+  function selectedAllocationV32(proc,idx){const arr=proc?.allocations||[];return arr[Number(idx)]||arr[0]||{};}
+  movementRowTemplate = function movementRowTemplate(values={}, isReceipt=false, procId=null){
+    const proc=db.procurements.find(p=>p.id===+(procId||values.procId||0)) || vis().find(p=>spmk(p)&&p.allocations.length) || null;
+    const opts=allocationOptionsV32(proc), selected=values.allocationIndex!=null?Number(values.allocationIndex):0, src=selectedAllocationV32(proc,selected);
+    const labelTanggal=isReceipt?"Tanggal Penerimaan":"Tanggal Pengiriman", labelVolume=isReceipt?"Volume Diterima":"Volume Terkirim";
+    return `<div class="multiRow movementRow"><div class="rowHeader"><b>Baris ${isReceipt?"Penerimaan":"Pengiriman"}</b><button type="button" class="btn danger small" data-remove-row>Hapus</button></div><div class="formGrid"><div class="field"><label>${labelTanggal}</label>${nativeDateFieldV32("tanggal",values.tanggal,true)}</div><div class="field full"><label>Pilih Barang dari Alokasi KPH</label><select name="allocationIndex" data-allocation-select required>${opts.map(o=>`<option value="${o.value}" ${selected===o.value?"selected":""}>${esc(o.label)}</option>`).join("")}</select></div><div class="field"><label>Satuan Kerja</label><input name="satuanKerja" readonly required value="${esc(values.satuanKerja||src.satuanKerja||"")}"></div><div class="field"><label>Termin</label><input name="termin" readonly required value="${esc(values.termin||src.termin||"")}"></div><div class="field"><label>Nama Barang</label><input name="jenisBarang" readonly required value="${esc(values.jenisBarang||src.jenisBarang||"")}"></div><div class="field"><label>Satuan</label><input name="satuan" readonly required value="${esc(values.satuan||src.satuan||"")}"></div><div class="field"><label>Tarif (Rp)</label><input name="tarif" readonly class="num-id" value="${src.tarif?numID(src.tarif):""}"></div><div class="field"><label>${labelVolume}</label><input name="volume" class="num-id" inputmode="numeric" required value="${values.volume?numID(values.volume):""}"></div><div class="field full"><label>Upload DP / File Dokumen</label>${typeof uploadDpFileDokumenHtmlV9==="function"?uploadDpFileDokumenHtmlV9("dpCameraName","dpFile"):`<input name="dpFile" type="file">`}</div><div class="field"><label>Nilai</label><input disabled placeholder="Otomatis = tarif x volume"></div></div></div>`;
+  };
+  multiMovementForm = function multiMovementForm(proc=null, formId, type){
+    const allowed=type==="receipts"?vis().filter(p=>spmk(p)&&p.shipments.length&&p.allocations.length):vis().filter(p=>spmk(p)&&p.allocations.length);
+    const rows=proc?[proc]:allowed;
+    if(!rows.length) return `<div class="empty">${type==="receipts"?"Belum ada pengiriman/alokasi, sehingga penerimaan belum dapat diinput.":"Belum ada pengadaan yang sudah SPMK dan memiliki alokasi."}</div>`;
+    const p0=proc||rows[0], isReceipt=type==="receipts";
+    return `<form id="${formId}" class="multiForm" data-kind="${type}"><div class="formGrid"><div class="field"><label>Pengadaan</label><select name="procId" data-proc-select ${proc?"disabled":""}>${rows.map(p=>`<option value="${p.id}" ${p.id===p0.id?"selected":""}>${esc(p.nama)}</option>`).join("")}</select>${proc?`<input type="hidden" name="procId" value="${proc.id}">`:""}</div><div class="field"><label>No PKS</label><input name="noPks" data-nopks-field readonly required value="${esc(p0?.contract?.noPks||"")}" placeholder="Otomatis dari Masa Pelaksanaan"></div><div class="field"><label>Tahun PKS</label><input name="tahunPks" class="num-id" inputmode="numeric" value="${new Date().getFullYear()}"></div></div><div class="help ok" style="margin-top:12px">Tanggal ${isReceipt?"penerimaan":"pengiriman"} dapat dipilih langsung dari kalender.</div><div class="multiRows" data-container="${type}">${movementRowTemplate({},isReceipt,p0.id)}</div><div class="multiToolbar"><button type="button" class="btn ghost small" data-add-movement-row="${type}">+ Tambah ${isReceipt?"Penerimaan":"Pengiriman"} Barang</button><button class="btn primary" type="submit">Simpan Semua ${isReceipt?"Penerimaan":"Pengiriman"}</button></div></form>`;
+  };
+  shipping = function shipping(){
+    const rows=vis().filter(x=>spmk(x)&&x.allocations.length);
+    return `<div class="help ok">Tanggal pengiriman dapat dipilih dari kalender. Nomor PKS otomatis dari Masa Pelaksanaan dan Nama Barang diambil dari data Alokasi KPH.</div><div class="card pad" style="margin-top:14px"><h2 style="margin-top:0">Form Pengiriman Barang</h2>${can("Pengiriman Barang","tambah")?multiMovementForm(null,"shipMultiForm","shipments"):`<div class="help warn">Role Anda tidak dapat menambah pengiriman.</div>`}</div><div class="head"><h2>Data Pengiriman</h2></div>${movTable("shipments")}`;
+  };
+  receiving = function receiving(){
+    const rows=vis().filter(x=>spmk(x)&&x.shipments.length);
+    return `<div class="help ${rows.length?"ok":"warn"}">Tanggal penerimaan dapat dipilih dari kalender. Nomor PKS otomatis dari Masa Pelaksanaan dan Nama Barang diambil dari data Alokasi KPH.</div><div class="card pad" style="margin-top:14px"><h2 style="margin-top:0">Form Penerimaan Barang</h2>${can("Penerimaan Barang","tambah")?multiMovementForm(null,"recMultiForm","receipts"):`<div class="help warn">Role Anda tidak dapat menambah penerimaan.</div>`}</div><div class="head"><h2>Data Penerimaan</h2></div>${movTable("receipts")}`;
+  };
+
+  const bindMultiFormsBeforeV32=bindMultiForms;
+  bindMultiForms = function bindMultiForms(){
+    try{bindMultiFormsBeforeV32();}catch(e){console.warn(e);}
+    [["approvalAllocForm","allocation"],["allocMultiForm","allocation"]].forEach(([id])=>{const f=document.getElementById(id); if(f) f.onsubmit=saveMultiAllocation;});
+    bindAllocationGroupsV32();
+    enhanceNativeDateInputsV32(document);
+  };
+  const bindPageBeforeV32=bindPage;
+  bindPage = function bindPage(){
+    try{bindPageBeforeV32();}catch(e){console.warn(e);}
+    document.querySelectorAll('[data-contract]').forEach(btn=>{btn.onclick=()=>contract(+btn.dataset.contract);});
+    bindContractForm();
+    bindMultiForms();
+    enhanceNativeDateInputsV32(document);
+  };
+  const bindApprovalFormsBeforeV32=bindApprovalForms;
+  bindApprovalForms = function bindApprovalForms(){
+    try{bindApprovalFormsBeforeV32();}catch(e){console.warn(e);}
+    bindContractForm();
+    bindMultiForms();
+    enhanceNativeDateInputsV32(document);
+  };
+  try{
+    window.contractForm=contractForm;
+    window.refreshContractForm=refreshContractForm;
+    window.bindContractForm=bindContractForm;
+    window.masa=masa;
+    window.contract=contract;
+    window.multiAllocationForm=multiAllocationForm;
+    window.allocationRowTemplate=allocationRowTemplate;
+    window.saveMultiAllocation=saveMultiAllocation;
+    window.allocation=allocation;
+    window.movementRowTemplate=movementRowTemplate;
+    window.multiMovementForm=multiMovementForm;
+    window.shipping=shipping;
+    window.receiving=receiving;
+    window.bindFormattedInputs=bindFormattedInputs;
+    window.bindMultiForms=bindMultiForms;
+    window.bindPage=bindPage;
+    window.bindApprovalForms=bindApprovalForms;
+    render();
+  }catch(e){console.error('Patch v32 tanggal otomatis gagal',e);}
+})();
