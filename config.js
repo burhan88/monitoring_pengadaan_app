@@ -7,8 +7,8 @@
   - primaryColor  : warna utama aplikasi
 */
 window.APP_CONFIG = {
-  appName: "Manajemen dan Pantauan Pengadaan Barang",
-  shortName: "MANTAB",
+  appName: "Monitoring Pengadaan Barang",
+  shortName: "MPB",
   organizationName: "Divre",
   logoUrl: "assets/logo.svg",
   faviconUrl: "assets/favicon.svg",
