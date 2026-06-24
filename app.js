@@ -3688,3 +3688,407 @@ render();
     render();
   }catch(e){console.error('Patch v35 approval ringkas gagal', e);}
 })();
+
+/* === PATCH v36: contoh setelah SPMK + approve aman tanpa error === */
+(function(){
+  const DEMO_FLAG='v36DemoAfterSpmkAdded';
+  const DEMO_MARKER='DEMO_V36_AFTER_SPMK_READY';
+
+  function workDaysV36(start,end){
+    try{
+      const s=new Date((safeDateISO(start)||today())+'T00:00:00');
+      const e=new Date((safeDateISO(end)||today())+'T00:00:00');
+      if(Number.isNaN(s.getTime())||Number.isNaN(e.getTime())) return 0;
+      let n=0, d=new Date(s);
+      while(d<=e){
+        const day=d.getDay();
+        if(day!==0 && day!==6) n++;
+        d.setDate(d.getDate()+1);
+      }
+      return Math.max(0,n);
+    }catch(err){return 0;}
+  }
+
+  function ensureShapeV36(proc){
+    proc.completedSteps=Array.isArray(proc.completedSteps)?proc.completedSteps:[];
+    proc.approvals=Array.isArray(proc.approvals)?proc.approvals:[];
+    proc.documents=Array.isArray(proc.documents)?proc.documents:[];
+    proc.allocations=Array.isArray(proc.allocations)?proc.allocations:[];
+    proc.shipments=Array.isArray(proc.shipments)?proc.shipments:[];
+    proc.receipts=Array.isArray(proc.receipts)?proc.receipts:[];
+    proc.contract=proc.contract||{};
+    proc.stepStartedAt=proc.stepStartedAt||{};
+    return proc;
+  }
+
+  function makeDemoV36(targetDb){
+    const id=Number(targetDb.nextProcId||1);
+    const current=IDX.ALOKASI;
+    const demo=typeof p==='function'
+      ? p(id,'Contoh Setelah SPMK - Siap Approve Alokasi','IT','Pengadaan Langsung','Bibit Kopi Arabika','Batang',500,'Contoh data sudah melewati SPMK untuk uji approve tanpa error.',current,'2026-06-03')
+      : {id,nama:'Contoh Setelah SPMK - Siap Approve Alokasi',bidang:'IT',jenisPengadaan:'Pengadaan Langsung',jenisBarang:'Bibit Kopi Arabika',satuan:'Batang',totalUsulan:500,catatan:'Contoh data sudah melewati SPMK untuk uji approve tanpa error.',createdAt:'2026-06-03',currentStep:current,completedSteps:Array.from({length:current},(_,i)=>i),approvals:[],allocations:[],shipments:[],receipts:[],contract:{}};
+    demo.demoMarker=DEMO_MARKER;
+    demo.vendor='PT Agro Lestari Demo';
+    demo.contract={
+      noPks:'PKS-DEMO-SPMK/001/2026',
+      tanggalPks:'2026-06-04',
+      tanggalPerjanjian:'2026-06-04',
+      tanggalMulai:'2026-06-05',
+      tanggalAkhir:'2026-07-05',
+      keterangan:'Data contoh sudah melewati SPMK.'
+    };
+    demo.allocations=[typeof alloc==='function'
+      ? alloc('PT Agro Lestari Demo','PKS-DEMO-SPMK/001/2026','2026-06-04','Termin I','2026-06-05','2026-07-05','KPH Bandung','Bibit Kopi Arabika','Batang',18000,500,2026)
+      : {vendor:'PT Agro Lestari Demo',noPks:'PKS-DEMO-SPMK/001/2026',tanggalPks:'2026-06-04',termin:'Termin I',tanggalMulai:'2026-06-05',tanggalAkhir:'2026-07-05',satuanKerja:'KPH Bandung',jenisBarang:'Bibit Kopi Arabika',satuan:'Batang',tarif:18000,volume:500,tahunPks:2026,nilai:9000000}
+    ];
+    demo.documents=[{
+      stepId:current,
+      stepTitle:STEPS[current]?.title||'Kegiatan Pengisian Alokasi Barang Per KPH',
+      name:'Dokumen Pelengkap Alokasi KPH Demo',
+      file:'dokumen-alokasi-kph-demo.pdf',
+      camera:'',
+      note:'Dokumen contoh agar tombol Approve Tahapan Ini dapat diuji setelah SPMK.',
+      by:'Petugas PBJ',
+      role:'PBJ',
+      at:new Date().toISOString()
+    }];
+    demo.stepStartedAt={};
+    for(let i=0;i<=current;i++) demo.stepStartedAt[i]=i===current?today():'2026-06-03';
+    demo.approvals=Array.from({length:current},(_,i)=>({
+      stepId:i,
+      stepTitle:STEPS[i]?.title||`Tahapan ${i+1}`,
+      pic:STEPS[i]?.pic||'-',
+      startedAt:demo.stepStartedAt[i]||'2026-06-03',
+      approvedBy:'Data Demo',
+      approvedRole:STEPS[i]?.pic||'-',
+      approvedAt:'2026-06-04T08:00:00.000Z',
+      workDays:1
+    }));
+    ensureShapeV36(demo);
+    return demo;
+  }
+
+  function ensureDemoInDbV36(targetDb){
+    if(!targetDb || !Array.isArray(targetDb.procurements)) return targetDb;
+    targetDb.procurements.forEach(ensureShapeV36);
+    const hasDemo=targetDb.procurements.some(x=>x.demoMarker===DEMO_MARKER || x.nama==='Contoh Setelah SPMK - Siap Approve Alokasi');
+    if(!hasDemo && !targetDb[DEMO_FLAG]){
+      const demo=makeDemoV36(targetDb);
+      targetDb.procurements.push(demo);
+      targetDb.nextProcId=Math.max(Number(targetDb.nextProcId||1), demo.id+1);
+    }
+    targetDb[DEMO_FLAG]=true;
+    return targetDb;
+  }
+
+  try{
+    const initialDbBeforeV36=initialDb;
+    initialDb=function initialDb(){
+      return ensureDemoInDbV36(initialDbBeforeV36());
+    };
+  }catch(err){console.warn('Patch v36 initialDb tidak dapat dibungkus',err);}
+
+  function refreshAfterApproveV36(proc){
+    try{
+      if(state.page==='approval' && typeof window.compactApprovalDetailV35==='function'){
+        render();
+        setTimeout(()=>window.compactApprovalDetailV35(proc.id),0);
+        return;
+      }
+      if(document.querySelector('.approvalDetailModal') && typeof detail==='function'){
+        detail(proc.id);
+        return;
+      }
+      render();
+    }catch(err){
+      console.error('Refresh approval v36 gagal',err);
+      try{render();}catch(e){}
+    }
+  }
+
+  approve=function approve(id){
+    try{
+      const proc=db.procurements.find(p=>Number(p.id)===Number(id));
+      if(!proc) return toast('Pengadaan tidak ditemukan.');
+      ensureShapeV36(proc);
+      if(!document.querySelector('.approvalDetailModal') && typeof window.openApprovalTargetV35==='function'){
+        return window.openApprovalTargetV35(proc.id);
+      }
+      const current=Number(proc.currentStep||0);
+      const step=STEPS[current];
+      if(!step){
+        toast('Seluruh tahapan approval sudah selesai.');
+        return refreshAfterApproveV36(proc);
+      }
+      let g;
+      try{g=gate(proc,current);}catch(err){
+        console.error('Validasi approval v36 gagal',err);
+        g={ok:false,msg:'Validasi approval gagal. Periksa data tahapan dan dokumen pelengkap.'};
+      }
+      if(!g.ok) return toast(g.msg);
+      if(!proc.completedSteps.includes(current)) proc.completedSteps.push(current);
+      proc.completedSteps=[...new Set(proc.completedSteps.map(Number))].filter(n=>n>=0&&n<STEPS.length).sort((a,b)=>a-b);
+      if(!proc.stepStartedAt[current]){
+        proc.stepStartedAt[current]=typeof stepStartISO==='function'?stepStartISO(proc,current):today();
+      }
+      proc.approvals.push({
+        stepId:current,
+        stepTitle:step.title,
+        pic:step.pic,
+        startedAt:proc.stepStartedAt[current],
+        approvedBy:session?.name||'User',
+        approvedRole:session?.role||'-',
+        approvedAt:new Date().toISOString(),
+        workDays:workDaysV36(proc.stepStartedAt[current],today())
+      });
+      proc.currentStep=Math.min(STEPS.length,current+1);
+      if(proc.currentStep<STEPS.length && !proc.stepStartedAt[proc.currentStep]) proc.stepStartedAt[proc.currentStep]=today();
+      save();
+      toast('Approval berhasil disimpan.');
+      refreshAfterApproveV36(proc);
+    }catch(err){
+      console.error('Approve v36 error',err);
+      toast('Approval gagal diproses. Data sudah diamankan, silakan buka ulang bagian approval.');
+    }
+  };
+
+  try{
+    ensureDemoInDbV36(db);
+    save();
+    window.approve=approve;
+    render();
+  }catch(err){console.error('Patch v36 contoh setelah SPMK gagal',err);}
+})();
+
+/* === PATCH v37: editor hari, bulan, dan tahun pada popup tanggal === */
+(function(){
+  const MONTHS_FULL_V37=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+  const MONTHS_SHORT_V37=["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+  const DAYS_SHORT_V37=["Min","Sen","Sel","Rab","Kam","Jum","Sab"];
+  const DAY_HEAD_V37=["M","S","S","R","K","J","S"];
+  let activePickerV37=null;
+
+  function padV37(n){return String(n).padStart(2,"0");}
+  function isoFromDateV37(dt){return `${dt.getFullYear()}-${padV37(dt.getMonth()+1)}-${padV37(dt.getDate())}`;}
+  function daysInMonthV37(y,m){return new Date(y,m+1,0).getDate();}
+  function clampV37(n,min,max){n=Number(n); if(!Number.isFinite(n)) return min; return Math.min(max,Math.max(min,n));}
+  function dateFromIsoV37(iso){
+    const m=String(iso||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(!m) return null;
+    const dt=new Date(+m[1],+m[2]-1,+m[3]);
+    if(Number.isNaN(dt.getTime())) return null;
+    if(dt.getFullYear()!==+m[1] || dt.getMonth()!==+m[2]-1 || dt.getDate()!==+m[3]) return null;
+    return dt;
+  }
+  function normalizeDateV37(v){
+    const raw=String(v||"").trim();
+    if(!raw) return "";
+    if(/^\d{4}-\d{2}-\d{2}$/.test(raw)) return dateFromIsoV37(raw)?raw:"";
+    const m=raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+    if(m){
+      const dt=new Date(+m[3],+m[2]-1,+m[1]);
+      return dt.getFullYear()===+m[3] && dt.getMonth()===+m[2]-1 && dt.getDate()===+m[1] ? isoFromDateV37(dt) : "";
+    }
+    const parsed=new Date(raw);
+    return Number.isNaN(parsed.getTime())?"":isoFromDateV37(parsed);
+  }
+  function displayDateV37(iso){
+    const dt=dateFromIsoV37(normalizeDateV37(iso));
+    return dt?`${DAYS_SHORT_V37[dt.getDay()]}, ${dt.getDate()} ${MONTHS_SHORT_V37[dt.getMonth()]} ${dt.getFullYear()}`:"Pilih tanggal";
+  }
+  function sameDayV37(a,b){return !!a&&!!b&&a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
+  function fieldTitleV37(input){
+    const label=input.closest?.(".field")?.querySelector?.("label")?.textContent?.trim();
+    return label || input.getAttribute("aria-label") || input.name || "Tanggal";
+  }
+  function sourceInputFromButtonV37(btn){
+    const wrap=btn?.closest?.(".mpbDateSelectV33");
+    const input=wrap?.previousElementSibling;
+    if(input?.matches?.('input[data-mpb-calendar-ready-v33="1"], input.mpbDateSourceV33')) return input;
+    return null;
+  }
+  function closeDatePickerV37(){
+    if(activePickerV37){
+      document.removeEventListener("keydown",activePickerV37.onKey,true);
+      activePickerV37.back.remove();
+      activePickerV37=null;
+    }
+  }
+  function refreshExistingButtonV37(input){
+    const wrap=input?.nextElementSibling?.classList?.contains("mpbDateSelectV33")?input.nextElementSibling:null;
+    const btn=wrap?.querySelector?.("[data-mpb-date-button]");
+    if(!btn) return;
+    btn.textContent=displayDateV37(input.value);
+    btn.classList.toggle("is-empty",!normalizeDateV37(input.value));
+    btn.classList.toggle("is-readonly",!!input.readOnly);
+    btn.title=input.readOnly||input.disabled?`${fieldTitleV37(input)} otomatis dari data lain`:`Klik untuk memilih atau mengedit ${fieldTitleV37(input).toLowerCase()}`;
+  }
+  function fireDateChangeV37(input){
+    refreshExistingButtonV37(input);
+    input.dispatchEvent(new Event("input",{bubbles:true}));
+    input.dispatchEvent(new Event("change",{bubbles:true}));
+    setTimeout(()=>document.querySelectorAll('input[data-mpb-calendar-ready-v33="1"]').forEach(refreshExistingButtonV37),0);
+  }
+  function controlDateV37(dayInput,monthSelect,yearInput,fallback){
+    const base=fallback || new Date();
+    const y=clampV37(yearInput.value||base.getFullYear(),1900,2100);
+    const m=clampV37(monthSelect.value||base.getMonth(),0,11);
+    const max=daysInMonthV37(y,m);
+    const d=clampV37(dayInput.value||base.getDate(),1,max);
+    dayInput.max=String(max);
+    dayInput.value=String(d);
+    monthSelect.value=String(m);
+    yearInput.value=String(y);
+    return new Date(y,m,d);
+  }
+  function openDatePickerV37(input){
+    if(!input || input.disabled || input.readOnly) return;
+    closeDatePickerV37();
+    const initial=dateFromIsoV37(normalizeDateV37(input.value));
+    let selected=initial?new Date(initial):null;
+    let cursor=selected?new Date(selected):new Date();
+    cursor=new Date(cursor.getFullYear(),cursor.getMonth(),cursor.getDate());
+
+    const back=document.createElement("div");
+    back.className="mpbDatePickerBackV33 mpbDatePickerBackV37";
+    back.innerHTML=`<div class="mpbDatePickerV33 mpbDatePickerV37" role="dialog" aria-modal="true" aria-label="Pemilih tanggal dengan editor hari bulan tahun">
+      <div class="mpbDatePickerTopV33 mpbDatePickerTopV37">
+        <div class="mpbDateYearV33" data-title-year></div>
+        <div class="mpbDateSelectedV33" data-selected-label></div>
+      </div>
+      <div class="mpbDateEditorV37" aria-label="Edit tanggal">
+        <label>Hari<input data-day-edit type="number" min="1" max="31" inputmode="numeric"></label>
+        <label>Bulan<select data-month-edit>${MONTHS_FULL_V37.map((m,i)=>`<option value="${i}">${m}</option>`).join("")}</select></label>
+        <label>Tahun<input data-year-edit type="number" min="1900" max="2100" inputmode="numeric"></label>
+      </div>
+      <div class="mpbDateCalendarV33 mpbDateCalendarV37">
+        <div class="mpbDateMonthNavV33">
+          <button type="button" class="mpbDateNavV33" data-prev aria-label="Bulan sebelumnya">‹</button>
+          <strong data-month></strong>
+          <button type="button" class="mpbDateNavV33" data-next aria-label="Bulan berikutnya">›</button>
+        </div>
+        <div class="mpbDateGridV33 mpbDateDaysV33"></div>
+        <div class="mpbDateGridV33" data-grid></div>
+      </div>
+      <div class="mpbDateActionsV33">
+        <button type="button" class="mpbDateActionV33" data-clear>HAPUS</button>
+        <button type="button" class="mpbDateActionV33" data-cancel>BATAL</button>
+        <button type="button" class="mpbDateActionV33 primary" data-set>SETEL</button>
+      </div>
+    </div>`;
+    document.body.appendChild(back);
+    activePickerV37={back,onKey:(ev)=>{if(ev.key==="Escape") closeDatePickerV37();}};
+    document.addEventListener("keydown",activePickerV37.onKey,true);
+
+    const dayInput=back.querySelector("[data-day-edit]");
+    const monthSelect=back.querySelector("[data-month-edit]");
+    const yearInput=back.querySelector("[data-year-edit]");
+    const days=back.querySelector(".mpbDateDaysV33");
+    days.innerHTML=DAY_HEAD_V37.map(x=>`<span>${x}</span>`).join("");
+
+    function syncControls(dt){
+      const base=dt || cursor || new Date();
+      const max=daysInMonthV37(base.getFullYear(),base.getMonth());
+      dayInput.max=String(max);
+      dayInput.value=String(clampV37(base.getDate(),1,max));
+      monthSelect.value=String(base.getMonth());
+      yearInput.value=String(base.getFullYear());
+    }
+    function applyControls(){
+      const dt=controlDateV37(dayInput,monthSelect,yearInput,selected||cursor||new Date());
+      selected=dt;
+      cursor=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate());
+      renderPicker(false);
+    }
+    function renderPicker(sync=true){
+      if(sync) syncControls(selected||cursor);
+      const topDate=selected||cursor;
+      const preview=selected?`${DAYS_SHORT_V37[selected.getDay()]}, ${selected.getDate()} ${MONTHS_SHORT_V37[selected.getMonth()]} ${selected.getFullYear()}`:"Pilih tanggal";
+      back.querySelector("[data-title-year]").textContent=topDate.getFullYear();
+      back.querySelector("[data-selected-label]").textContent=preview;
+      back.querySelector("[data-month]").textContent=`${MONTHS_FULL_V37[cursor.getMonth()]} ${cursor.getFullYear()}`;
+      const grid=back.querySelector("[data-grid]");
+      const first=new Date(cursor.getFullYear(),cursor.getMonth(),1).getDay();
+      const total=daysInMonthV37(cursor.getFullYear(),cursor.getMonth());
+      const today=new Date();
+      let html="";
+      for(let i=0;i<first;i++) html+='<span class="mpbDateBlankV33"></span>';
+      for(let day=1;day<=total;day++){
+        const dt=new Date(cursor.getFullYear(),cursor.getMonth(),day);
+        const cls=["mpbDateDayV33"];
+        if(sameDayV37(dt,today)) cls.push("is-today");
+        if(sameDayV37(dt,selected)) cls.push("is-selected");
+        html+=`<button type="button" class="${cls.join(" ")}" data-day="${day}" aria-label="${DAYS_SHORT_V37[dt.getDay()]}, ${day} ${MONTHS_FULL_V37[dt.getMonth()]} ${dt.getFullYear()}">${day}</button>`;
+      }
+      grid.innerHTML=html;
+    }
+    function moveMonth(delta){
+      const base=selected||cursor||new Date();
+      const y=base.getFullYear(), m=base.getMonth()+delta;
+      const targetMonthDate=new Date(y,m,1);
+      const d=Math.min(base.getDate(),daysInMonthV37(targetMonthDate.getFullYear(),targetMonthDate.getMonth()));
+      selected=new Date(targetMonthDate.getFullYear(),targetMonthDate.getMonth(),d);
+      cursor=new Date(selected);
+      renderPicker(true);
+    }
+
+    dayInput.addEventListener("input",applyControls);
+    monthSelect.addEventListener("change",applyControls);
+    yearInput.addEventListener("input",()=>{
+      if(String(yearInput.value||"").length<4) return;
+      applyControls();
+    });
+    yearInput.addEventListener("change",applyControls);
+    back.querySelector("[data-prev]").onclick=()=>moveMonth(-1);
+    back.querySelector("[data-next]").onclick=()=>moveMonth(1);
+    back.querySelector("[data-clear]").onclick=()=>{input.value="";fireDateChangeV37(input);closeDatePickerV37();};
+    back.querySelector("[data-cancel]").onclick=()=>closeDatePickerV37();
+    back.querySelector("[data-set]").onclick=()=>{
+      selected=controlDateV37(dayInput,monthSelect,yearInput,selected||cursor||new Date());
+      input.value=isoFromDateV37(selected);
+      fireDateChangeV37(input);
+      closeDatePickerV37();
+    };
+    back.querySelector("[data-grid]").onclick=(ev)=>{
+      const btn=ev.target.closest?.("[data-day]");
+      if(!btn) return;
+      selected=new Date(cursor.getFullYear(),cursor.getMonth(),Number(btn.dataset.day));
+      cursor=new Date(selected);
+      renderPicker(true);
+    };
+    back.addEventListener("mousedown",ev=>{if(ev.target===back) closeDatePickerV37();});
+    renderPicker(true);
+    setTimeout(()=>dayInput.focus?.(),0);
+  }
+
+  document.addEventListener("click",function(ev){
+    const btn=ev.target?.closest?.("[data-mpb-date-button]");
+    if(!btn) return;
+    const input=sourceInputFromButtonV37(btn);
+    if(!input) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    ev.stopImmediatePropagation?.();
+    openDatePickerV37(input);
+  },true);
+
+  const bindPageBeforeV37=typeof bindPage==='function'?bindPage:null;
+  if(bindPageBeforeV37){
+    bindPage=function bindPage(){
+      try{bindPageBeforeV37();}catch(e){console.warn(e);}
+      document.querySelectorAll('input[data-mpb-calendar-ready-v33="1"]').forEach(refreshExistingButtonV37);
+    };
+  }
+  const bindApprovalFormsBeforeV37=typeof bindApprovalForms==='function'?bindApprovalForms:null;
+  if(bindApprovalFormsBeforeV37){
+    bindApprovalForms=function bindApprovalForms(){
+      try{bindApprovalFormsBeforeV37();}catch(e){console.warn(e);}
+      document.querySelectorAll('input[data-mpb-calendar-ready-v33="1"]').forEach(refreshExistingButtonV37);
+    };
+  }
+  try{
+    window.openDatePickerV37=openDatePickerV37;
+    window.closeDatePickerV37=closeDatePickerV37;
+    render();
+  }catch(e){console.error('Patch v37 editor tanggal gagal',e);}
+})();
