@@ -4092,3 +4092,496 @@ render();
     render();
   }catch(e){console.error('Patch v37 editor tanggal gagal',e);}
 })();
+
+/* === PATCH v38: auto hitung Durasi Hari Efektif dan Status Tata Waktu setelah pilih/edit tanggal === */
+(function(){
+  const DEFAULT_HOLIDAYS_V38 = [
+    "2026-01-01","2026-02-16","2026-02-17","2026-03-19","2026-03-20","2026-03-21",
+    "2026-05-01","2026-05-14","2026-05-27","2026-06-01","2026-06-17","2026-08-17","2026-12-25"
+  ];
+  function padV38(n){return String(n).padStart(2,"0");}
+  function isoFromDateV38(dt){return `${dt.getFullYear()}-${padV38(dt.getMonth()+1)}-${padV38(dt.getDate())}`;}
+  function validDateV38(y,m,d){
+    const dt=new Date(Number(y),Number(m)-1,Number(d));
+    if(Number.isNaN(dt.getTime())) return "";
+    return dt.getFullYear()===Number(y) && dt.getMonth()===Number(m)-1 && dt.getDate()===Number(d) ? isoFromDateV38(dt) : "";
+  }
+  function safeIsoV38(v){
+    const raw=String(v||"").trim();
+    if(!raw) return "";
+    let m=raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(m) return validDateV38(m[1],m[2],m[3]);
+    m=raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+    if(m) return validDateV38(m[3],m[2],m[1]);
+    const parsed=new Date(raw);
+    return Number.isNaN(parsed.getTime()) ? "" : isoFromDateV38(parsed);
+  }
+  function dateObjV38(v){
+    const iso=safeIsoV38(v);
+    return iso ? new Date(`${iso}T00:00:00`) : new Date(NaN);
+  }
+  function calendarDiffV38(a,b){
+    const da=dateObjV38(a), dbb=dateObjV38(b);
+    if(Number.isNaN(da.getTime())||Number.isNaN(dbb.getTime())) return NaN;
+    return Math.floor((dbb-da)/864e5);
+  }
+  function nextIsoV38(v,delta=1){
+    const dt=dateObjV38(v);
+    dt.setDate(dt.getDate()+delta);
+    return isoFromDateV38(dt);
+  }
+  function holidaysV38(){
+    if(Array.isArray(db?.holidays) && db.holidays.length) return db.holidays.map(safeIsoV38).filter(Boolean);
+    return DEFAULT_HOLIDAYS_V38;
+  }
+  function isHolidayV38(v){return holidaysV38().includes(safeIsoV38(v));}
+  function isWorkdayV38(v){
+    const dt=dateObjV38(v), day=dt.getDay();
+    return !Number.isNaN(dt.getTime()) && day!==0 && day!==6 && !isHolidayV38(v);
+  }
+  function workDaysInclusiveV38(start,end){
+    start=safeIsoV38(start); end=safeIsoV38(end);
+    if(!start||!end) return 0;
+    const diff=calendarDiffV38(start,end);
+    if(!Number.isFinite(diff)) return 0;
+    if(diff<0) return -1;
+    let total=0, cur=start;
+    while(calendarDiffV38(cur,end)<=0){
+      if(isWorkdayV38(cur)) total++;
+      cur=nextIsoV38(cur,1);
+    }
+    return total;
+  }
+  function todayIsoV38(){return typeof today==='function' ? safeIsoV38(today()) : isoFromDateV38(new Date());}
+  function fmtNumV38(n){return typeof numID==='function' ? numID(n) : String(n);}
+  function contractDataV38(proc){
+    proc.contract=proc.contract||{};
+    ['tanggalPks','tanggalMulai','tanggalAkhir','tanggalPerjanjian'].forEach(k=>{
+      if(proc.contract[k]) proc.contract[k]=safeIsoV38(proc.contract[k])||proc.contract[k];
+    });
+    return proc.contract;
+  }
+
+  contractDuration = function contractDuration(proc){
+    const c=proc?.contract||{};
+    const start=safeIsoV38(c.tanggalMulai), end=safeIsoV38(c.tanggalAkhir);
+    if(!start||!end) return 0;
+    const n=workDaysInclusiveV38(start,end);
+    return Number.isFinite(n) ? Math.max(0,n) : 0;
+  };
+  contractElapsed = function contractElapsed(proc){
+    const c=proc?.contract||{};
+    const start=safeIsoV38(c.tanggalMulai), end=safeIsoV38(c.tanggalAkhir), now=todayIsoV38();
+    if(!start||!end) return 0;
+    const effectiveEnd=calendarDiffV38(now,end)<0 ? now : end;
+    const n=workDaysInclusiveV38(start,effectiveEnd);
+    return Number.isFinite(n) ? Math.max(0,n) : 0;
+  };
+  contractStatus = function contractStatus(proc){
+    const c=proc?.contract||{};
+    const start=safeIsoV38(c.tanggalMulai), end=safeIsoV38(c.tanggalAkhir), now=todayIsoV38();
+    if(!start||!end) return {text:"Pilih tanggal mulai dan tanggal akhir",color:"yellow"};
+    if(calendarDiffV38(start,end)<0) return {text:"Tanggal akhir lebih awal dari tanggal mulai",color:"red"};
+    const dur=contractDuration({contract:{tanggalMulai:start,tanggalAkhir:end}});
+    if(calendarDiffV38(now,start)>0){
+      const n=workDaysInclusiveV38(now,start);
+      return {text:`Kontrak mulai ${fmtNumV38(n)} hari kerja lagi • durasi ${fmtNumV38(dur)} hari kerja`,color:"blue"};
+    }
+    if(calendarDiffV38(end,now)>0){
+      const n=workDaysInclusiveV38(end,now);
+      return {text:`Kontrak lewat ${fmtNumV38(n)} hari kerja • durasi ${fmtNumV38(dur)} hari kerja`,color:"red"};
+    }
+    const rem=workDaysInclusiveV38(now,end), elapsed=contractElapsed({contract:{tanggalMulai:start,tanggalAkhir:end}});
+    return {text:`Sisa ${fmtNumV38(rem)} hari kerja • ${fmtNumV38(elapsed)}/${fmtNumV38(dur)} hari kerja`,color:rem<=3?"yellow":"green"};
+  };
+
+  function setDateValueV38(id,value){
+    const el=document.getElementById(id);
+    if(!el) return;
+    const iso=safeIsoV38(value);
+    el.value=iso;
+    try{
+      el.dispatchEvent(new Event('input',{bubbles:true}));
+      el.dispatchEvent(new Event('change',{bubbles:true}));
+    }catch(e){}
+  }
+  function sourceDateValueV38(id){
+    const el=document.getElementById(id);
+    return safeIsoV38(el?.value||"");
+  }
+  updateContractPreview = function updateContractPreview(){
+    const dur=document.getElementById('contractDurasi');
+    const stat=document.getElementById('contractStatusText');
+    if(!dur || !stat) return;
+    const mulai=sourceDateValueV38('contractTanggalMulai');
+    const akhir=sourceDateValueV38('contractTanggalAkhir');
+    if(!mulai || !akhir){
+      dur.value="";
+      stat.value="Pilih tanggal mulai dan tanggal akhir";
+      return;
+    }
+    const diff=calendarDiffV38(mulai,akhir);
+    if(!Number.isFinite(diff) || diff<0){
+      dur.value="Tanggal tidak valid";
+      stat.value="Tanggal akhir harus setelah atau sama dengan tanggal mulai";
+      return;
+    }
+    const total=workDaysInclusiveV38(mulai,akhir);
+    dur.value=`${fmtNumV38(total)} hari kerja efektif`;
+    stat.value=contractStatus({contract:{tanggalMulai:mulai,tanggalAkhir:akhir}}).text;
+  };
+
+  const refreshBeforeV38=typeof refreshContractForm==='function' ? refreshContractForm : null;
+  if(refreshBeforeV38){
+    refreshContractForm = function refreshContractForm(){
+      try{refreshBeforeV38();}catch(e){console.warn(e);}
+      const sel=document.getElementById('contractProc');
+      const proc=db.procurements.find(p=>Number(p.id)===Number(sel?.value));
+      if(proc){
+        const c=contractDataV38(proc);
+        const set=(id,v)=>setDateValueV38(id,v);
+        set('contractTanggalPks',c.tanggalPks);
+        set('contractTanggalMulai',c.tanggalMulai);
+        set('contractTanggalAkhir',c.tanggalAkhir);
+      }
+      updateContractPreview();
+      setTimeout(updateContractPreview,0);
+    };
+  }
+
+  function bindContractPreviewV38(scope=document){
+    ['contractTanggalPks','contractTanggalMulai','contractTanggalAkhir'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(!el || el.dataset.previewBoundV38==='1') return;
+      el.dataset.previewBoundV38='1';
+      ['input','change','blur'].forEach(ev=>el.addEventListener(ev,()=>setTimeout(updateContractPreview,0)));
+    });
+    const sel=document.getElementById('contractProc');
+    if(sel && sel.dataset.previewBoundV38!=='1'){
+      sel.dataset.previewBoundV38='1';
+      sel.addEventListener('change',()=>setTimeout(()=>{try{refreshContractForm();}catch(e){updateContractPreview();}},0));
+    }
+    if(scope?.querySelectorAll){
+      scope.querySelectorAll('[data-mpb-date-button]').forEach(btn=>{
+        if(btn.dataset.previewBoundV38==='1') return;
+        btn.dataset.previewBoundV38='1';
+        btn.addEventListener('click',()=>setTimeout(updateContractPreview,50));
+      });
+    }
+    updateContractPreview();
+  }
+
+  const bindContractBeforeV38=typeof bindContractForm==='function' ? bindContractForm : null;
+  if(bindContractBeforeV38){
+    bindContractForm = function bindContractForm(){
+      try{bindContractBeforeV38();}catch(e){console.warn(e);}
+      bindContractPreviewV38(document);
+      updateContractPreview();
+    };
+  }
+  const bindPageBeforeV38=typeof bindPage==='function' ? bindPage : null;
+  if(bindPageBeforeV38){
+    bindPage = function bindPage(){
+      try{bindPageBeforeV38();}catch(e){console.warn(e);}
+      if(document.getElementById('contractForm')) bindContractPreviewV38(document);
+    };
+  }
+
+  document.addEventListener('input',ev=>{
+    if(ev.target?.matches?.('#contractTanggalMulai,#contractTanggalAkhir,#contractTanggalPks')) setTimeout(updateContractPreview,0);
+  },true);
+  document.addEventListener('change',ev=>{
+    if(ev.target?.matches?.('#contractTanggalMulai,#contractTanggalAkhir,#contractTanggalPks,#contractProc')) setTimeout(updateContractPreview,0);
+  },true);
+  document.addEventListener('click',ev=>{
+    if(ev.target?.closest?.('[data-set], [data-clear], [data-mpb-date-button]')) setTimeout(updateContractPreview,80);
+  },true);
+
+  try{
+    (db.procurements||[]).forEach(contractDataV38);
+    if(!Array.isArray(db.holidays) || !db.holidays.length) db.holidays=DEFAULT_HOLIDAYS_V38;
+    save();
+    window.contractDuration=contractDuration;
+    window.contractElapsed=contractElapsed;
+    window.contractStatus=contractStatus;
+    window.updateContractPreview=updateContractPreview;
+    window.bindContractPreviewV38=bindContractPreviewV38;
+    render();
+  }catch(e){console.error('Patch v38 hitung durasi/status otomatis gagal',e);}
+})();
+
+/* === PATCH v39: perbaikan final hitung Durasi Hari Efektif dan Status Tata Waktu === */
+(function(){
+  const DEFAULT_HOLIDAYS_V39=[
+    '2026-01-01','2026-02-16','2026-02-17','2026-03-19','2026-03-20','2026-03-21',
+    '2026-05-01','2026-05-14','2026-05-27','2026-06-01','2026-06-17','2026-08-17','2026-12-25'
+  ];
+  const MONTH_ID_V39={
+    jan:1,januari:1,feb:2,februari:2,mar:3,maret:3,apr:4,april:4,mei:5,
+    jun:6,juni:6,jul:7,juli:7,agu:8,agustus:8,sep:9,september:9,
+    okt:10,oktober:10,nov:11,november:11,des:12,desember:12
+  };
+  function padV39(n){return String(n).padStart(2,'0');}
+  function isoFromPartsV39(y,m,d){return `${String(y).padStart(4,'0')}-${padV39(m)}-${padV39(d)}`;}
+  function isValidPartsV39(y,m,d){
+    y=Number(y);m=Number(m);d=Number(d);
+    if(!Number.isFinite(y)||!Number.isFinite(m)||!Number.isFinite(d)) return false;
+    const dt=new Date(y,m-1,d);
+    return !Number.isNaN(dt.getTime()) && dt.getFullYear()===y && dt.getMonth()===m-1 && dt.getDate()===d;
+  }
+  function normalizeDateV39(v){
+    let raw=String(v??'').trim();
+    if(!raw) return '';
+    raw=raw.replace(/\u200B|\u200C|\u200D|\uFEFF/g,'').replace(/\s+/g,' ').trim();
+    let m=raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s].*)?$/);
+    if(m && isValidPartsV39(m[1],m[2],m[3])) return isoFromPartsV39(+m[1],+m[2],+m[3]);
+    m=raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+    if(m && isValidPartsV39(m[3],m[2],m[1])) return isoFromPartsV39(+m[3],+m[2],+m[1]);
+    m=raw.toLowerCase().match(/^(?:min|sen|sel|rab|kam|jum|sab)?\s*,?\s*(\d{1,2})\s+([a-z]+)\s+(\d{4})$/i);
+    if(m){
+      const month=MONTH_ID_V39[m[2]];
+      if(month && isValidPartsV39(m[3],month,m[1])) return isoFromPartsV39(+m[3],month,+m[1]);
+    }
+    return '';
+  }
+  function dateObjV39(v){
+    const iso=normalizeDateV39(v);
+    return iso ? new Date(`${iso}T00:00:00`) : new Date(NaN);
+  }
+  function dayDiffV39(a,b){
+    const da=dateObjV39(a), dbb=dateObjV39(b);
+    if(Number.isNaN(da.getTime())||Number.isNaN(dbb.getTime())) return NaN;
+    return Math.round((dbb-da)/86400000);
+  }
+  function nextIsoV39(v,delta=1){
+    const dt=dateObjV39(v);
+    if(Number.isNaN(dt.getTime())) return '';
+    dt.setDate(dt.getDate()+delta);
+    return isoFromPartsV39(dt.getFullYear(),dt.getMonth()+1,dt.getDate());
+  }
+  function holidaySetV39(){
+    const src=Array.isArray(db?.holidays)&&db.holidays.length ? db.holidays : DEFAULT_HOLIDAYS_V39;
+    return new Set(src.map(normalizeDateV39).filter(Boolean));
+  }
+  function isWorkdayV39(v){
+    const iso=normalizeDateV39(v), dt=dateObjV39(iso);
+    if(!iso||Number.isNaN(dt.getTime())) return false;
+    const day=dt.getDay();
+    return day!==0 && day!==6 && !holidaySetV39().has(iso);
+  }
+  function workDaysInclusiveV39(start,end){
+    start=normalizeDateV39(start); end=normalizeDateV39(end);
+    if(!start||!end) return 0;
+    const diff=dayDiffV39(start,end);
+    if(!Number.isFinite(diff)) return 0;
+    if(diff<0) return -1;
+    let cur=start,total=0,guard=0;
+    while(dayDiffV39(cur,end)>=0 && guard<4000){
+      if(isWorkdayV39(cur)) total++;
+      cur=nextIsoV39(cur,1);
+      guard++;
+    }
+    return total;
+  }
+  function todayIsoV39(){
+    try{return normalizeDateV39(typeof today==='function'?today():new Date().toISOString().slice(0,10)) || new Date().toISOString().slice(0,10);}catch(e){return new Date().toISOString().slice(0,10);}
+  }
+  function fmtNumV39(n){return typeof numID==='function'?numID(Number(n)||0):String(Number(n)||0);}
+  function fmtDateV39(v){
+    const iso=normalizeDateV39(v);
+    if(!iso) return v ? String(v) : '-';
+    const [y,m,d]=iso.split('-');
+    return `${d}/${m}/${y}`;
+  }
+  function contractForV39(proc){
+    if(!proc) return {noPks:'',tanggalPks:'',tanggalMulai:'',tanggalAkhir:'',keterangan:''};
+    proc.contract=proc.contract||{};
+    const c=proc.contract;
+    if(!c.noPks && proc.noPks) c.noPks=proc.noPks;
+    if(!c.tanggalPks && proc.tanggalPks) c.tanggalPks=proc.tanggalPks;
+    if(!c.tanggalMulai) c.tanggalMulai=proc.tanggalMulai||proc.mulai||proc.tanggalMulaiKontrak||proc.startDate||'';
+    if(!c.tanggalAkhir) c.tanggalAkhir=proc.tanggalAkhir||proc.akhir||proc.tanggalAkhirKontrak||proc.endDate||'';
+    ['tanggalPks','tanggalPerjanjian','tanggalMulai','tanggalAkhir'].forEach(k=>{
+      const iso=normalizeDateV39(c[k]);
+      if(iso) c[k]=iso;
+    });
+    return c;
+  }
+  function normalizeAllContractsV39(){
+    try{
+      (db.procurements||[]).forEach(proc=>{
+        const c=contractForV39(proc);
+        if(proc.demoMarker==='DEMO_V36_AFTER_SPMK_READY' || proc.nama==='Contoh Setelah SPMK - Siap Approve Alokasi'){
+          proc.vendor=proc.vendor||'PT Agro Lestari Demo';
+          c.noPks=c.noPks||'PKS-DEMO-SPMK/001/2026';
+          c.tanggalPks=normalizeDateV39(c.tanggalPks)||'2026-06-04';
+          c.tanggalMulai=normalizeDateV39(c.tanggalMulai)||'2026-06-05';
+          c.tanggalAkhir=normalizeDateV39(c.tanggalAkhir)||'2026-07-05';
+          c.keterangan=c.keterangan||'Data contoh sudah melewati SPMK.';
+        }
+        c.durasiHariEfektif=contractDuration({contract:c});
+        c.statusTataWaktu=contractStatus({contract:c}).text;
+      });
+      if(!Array.isArray(db.holidays)||!db.holidays.length) db.holidays=DEFAULT_HOLIDAYS_V39.slice();
+    }catch(e){console.warn('Normalisasi kontrak v39 gagal',e);}
+  }
+
+  contractDuration=function contractDuration(proc){
+    const c=contractForV39(proc||{});
+    const start=normalizeDateV39(c.tanggalMulai), end=normalizeDateV39(c.tanggalAkhir);
+    if(!start||!end) return 0;
+    const n=workDaysInclusiveV39(start,end);
+    return Number.isFinite(n) ? Math.max(0,n) : 0;
+  };
+  contractElapsed=function contractElapsed(proc){
+    const c=contractForV39(proc||{});
+    const start=normalizeDateV39(c.tanggalMulai), end=normalizeDateV39(c.tanggalAkhir), now=todayIsoV39();
+    if(!start||!end) return 0;
+    if(dayDiffV39(start,end)<0) return 0;
+    const last=dayDiffV39(now,end)>0 ? now : end;
+    const n=workDaysInclusiveV39(start,last);
+    return Number.isFinite(n) ? Math.max(0,n) : 0;
+  };
+  contractStatus=function contractStatus(proc){
+    const c=contractForV39(proc||{});
+    const start=normalizeDateV39(c.tanggalMulai), end=normalizeDateV39(c.tanggalAkhir), now=todayIsoV39();
+    if(!start||!end) return {text:'Pilih tanggal mulai dan tanggal akhir',color:'yellow'};
+    if(dayDiffV39(start,end)<0) return {text:'Tanggal akhir lebih awal dari tanggal mulai',color:'red'};
+    const total=contractDuration({contract:{tanggalMulai:start,tanggalAkhir:end}});
+    if(dayDiffV39(now,start)>0){
+      const n=workDaysInclusiveV39(now,start);
+      return {text:`Mulai ${fmtNumV39(n)} hari kerja lagi • durasi ${fmtNumV39(total)} hari kerja`,color:'blue'};
+    }
+    if(dayDiffV39(end,now)>0){
+      const late=workDaysInclusiveV39(nextIsoV39(end,1),now);
+      return {text:`Lewat ${fmtNumV39(late)} hari kerja • ${fmtNumV39(total)}/${fmtNumV39(total)} hari kerja`,color:'red'};
+    }
+    const remain=workDaysInclusiveV39(now,end);
+    const elapsed=contractElapsed({contract:{tanggalMulai:start,tanggalAkhir:end}});
+    return {text:`Sisa ${fmtNumV39(remain)} hari kerja • ${fmtNumV39(elapsed)}/${fmtNumV39(total)} hari kerja`,color:remain<=3?'yellow':'green'};
+  };
+  d=function d(v){return fmtDateV39(v);};
+
+  function setValueV39(id,value){const el=document.getElementById(id); if(el) el.value=value??'';}
+  function formDateV39(name,id,value,required=false){
+    return `<input name="${esc(name)}" id="${esc(id)}" type="date" ${required?'required':''} value="${esc(normalizeDateV39(value))}">`;
+  }
+  contractOptionData=function contractOptionData(proc){
+    const c=contractForV39(proc);
+    return `data-vendor="${esc(proc?.vendor||'')}" data-nopks="${esc(c.noPks||'')}" data-tglpks="${esc(normalizeDateV39(c.tanggalPks))}" data-tglmulai="${esc(normalizeDateV39(c.tanggalMulai))}" data-tglakhir="${esc(normalizeDateV39(c.tanggalAkhir))}" data-keterangan="${esc(c.keterangan||'')}"`;
+  };
+  contractForm=function contractForm(rows,selectedId=''){
+    if(!rows.length) return `<div class="empty">Belum ada pengadaan yang mencapai SPMK.</div>`;
+    const selected=Number(selectedId)||rows[0].id;
+    const proc=rows.find(x=>Number(x.id)===Number(selected))||rows[0];
+    const c=contractForV39(proc);
+    return `<form id="contractForm" data-contract-form-v39>
+      <div class="formGrid">
+        <div class="field"><label>Pengadaan</label><select name="procId" id="contractProc" required>${rows.map(x=>`<option value="${x.id}" ${Number(selected)===Number(x.id)?'selected':''} ${contractOptionData(x)}>${esc(x.nama)}</option>`).join('')}</select></div>
+        <div class="field"><label>Vendor Bertanggung Jawab</label><input name="vendor" id="contractVendor" required placeholder="Nama vendor" value="${esc(proc.vendor||'')}"></div>
+        <div class="field"><label>No PKS</label><input name="noPks" id="contractNoPks" required placeholder="Nomor PKS" value="${esc(c.noPks||'')}"></div>
+        <div class="field"><label>Tanggal PKS</label>${formDateV39('tanggalPks','contractTanggalPks',c.tanggalPks,false)}</div>
+        <div class="field"><label>Tanggal Mulai Kontrak</label>${formDateV39('tanggalMulai','contractTanggalMulai',c.tanggalMulai,true)}</div>
+        <div class="field"><label>Tanggal Akhir Kontrak</label>${formDateV39('tanggalAkhir','contractTanggalAkhir',c.tanggalAkhir,true)}</div>
+        <div class="field"><label>Durasi Hari Efektif</label><input id="contractDurasi" disabled placeholder="Otomatis Senin-Jumat, hari libur tidak dihitung"></div>
+        <div class="field"><label>Status Tata Waktu</label><input id="contractStatusText" disabled placeholder="Otomatis dari tanggal mulai dan akhir"></div>
+        <div class="field full"><label>Keterangan Masa Pelaksanaan</label><textarea name="keterangan" id="contractKeterangan" placeholder="Catatan masa pelaksanaan pekerjaan">${esc(c.keterangan||'')}</textarea></div>
+        <div class="field full"><button class="btn primary" type="submit">Simpan Masa Pelaksanaan</button></div>
+      </div>
+    </form>`;
+  };
+  updateContractPreview=function updateContractPreview(){
+    const dur=document.getElementById('contractDurasi'), stat=document.getElementById('contractStatusText');
+    if(!dur||!stat) return;
+    const mulai=normalizeDateV39(document.getElementById('contractTanggalMulai')?.value);
+    const akhir=normalizeDateV39(document.getElementById('contractTanggalAkhir')?.value);
+    if(!mulai||!akhir){dur.value='';stat.value='Pilih tanggal mulai dan tanggal akhir';return;}
+    if(dayDiffV39(mulai,akhir)<0){dur.value='Tanggal akhir harus setelah/sama dengan mulai';stat.value='Tanggal akhir lebih awal dari tanggal mulai';return;}
+    const fake={contract:{tanggalMulai:mulai,tanggalAkhir:akhir}};
+    dur.value=`${fmtNumV39(contractDuration(fake))} hari kerja efektif`;
+    stat.value=contractStatus(fake).text;
+  };
+  refreshContractForm=function refreshContractForm(){
+    const sel=document.getElementById('contractProc');
+    if(!sel) return;
+    const proc=db.procurements.find(x=>Number(x.id)===Number(sel.value));
+    if(!proc) return;
+    const c=contractForV39(proc);
+    setValueV39('contractVendor',proc.vendor||'');
+    setValueV39('contractNoPks',c.noPks||'');
+    setValueV39('contractTanggalPks',normalizeDateV39(c.tanggalPks));
+    setValueV39('contractTanggalMulai',normalizeDateV39(c.tanggalMulai));
+    setValueV39('contractTanggalAkhir',normalizeDateV39(c.tanggalAkhir));
+    setValueV39('contractKeterangan',c.keterangan||'');
+    try{document.querySelectorAll('input[data-mpb-calendar-ready-v33="1"]').forEach(el=>el.dispatchEvent(new Event('input',{bubbles:true})));}catch(e){}
+    updateContractPreview();
+  };
+  saveContractForm=function saveContractForm(e){
+    e.preventDefault();
+    const data=fd(e.target), proc=db.procurements.find(x=>Number(x.id)===Number(data.procId));
+    if(!proc) return toast('Pengadaan tidak ditemukan.');
+    if(!spmk(proc)) return toast('Masa Pelaksanaan baru dapat diisi setelah SPMK.');
+    const tanggalPks=normalizeDateV39(data.tanggalPks), tanggalMulai=normalizeDateV39(data.tanggalMulai), tanggalAkhir=normalizeDateV39(data.tanggalAkhir);
+    if(!data.vendor||!data.noPks||!tanggalMulai||!tanggalAkhir) return toast('Vendor, No PKS, tanggal mulai, dan tanggal akhir wajib dipilih.');
+    if(dayDiffV39(tanggalMulai,tanggalAkhir)<0) return toast('Tanggal akhir kontrak tidak boleh sebelum tanggal mulai.');
+    proc.vendor=String(data.vendor||'').trim();
+    proc.contract={...(proc.contract||{}),noPks:String(data.noPks||'').trim(),tanggalPks,tanggalMulai,tanggalAkhir,keterangan:data.keterangan||''};
+    delete proc.contract.tanggalPerjanjian;
+    proc.contract.durasiHariEfektif=contractDuration(proc);
+    proc.contract.statusTataWaktu=contractStatus(proc).text;
+    save();
+    toast('Masa Pelaksanaan berhasil disimpan. Durasi dan status tata waktu sudah otomatis dihitung.');
+    const modal=document.getElementById('modalRoot'); if(modal) modal.innerHTML='';
+    render();
+  };
+  bindContractForm=function bindContractForm(){
+    const cf=document.getElementById('contractForm');
+    if(!cf) return;
+    cf.onsubmit=saveContractForm;
+    const sel=document.getElementById('contractProc');
+    if(sel) sel.onchange=()=>{refreshContractForm();setTimeout(updateContractPreview,0);};
+    ['contractTanggalPks','contractTanggalMulai','contractTanggalAkhir'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(!el) return;
+      ['input','change','blur'].forEach(ev=>el.addEventListener(ev,()=>setTimeout(updateContractPreview,0)));
+    });
+    refreshContractForm();
+    setTimeout(updateContractPreview,0);
+  };
+  masa=function masa(){
+    const rows=vis().filter(spmk);
+    return `<div class="help ok"><b>Update v39:</b> Durasi Hari Efektif dan Status Tata Waktu dihitung otomatis dari Tanggal Mulai Kontrak dan Tanggal Akhir Kontrak. Hari kerja: Senin-Jumat, hari libur aplikasi tidak dihitung.</div><div class="card pad" style="margin-top:14px"><div class="head" style="margin-top:0"><h2>Input Masa Pelaksanaan Pekerjaan</h2></div>${can('Masa Pelaksanaan','edit')?contractForm(rows):`<div class="help warn">Role Anda tidak dapat mengisi masa pelaksanaan.</div>`}</div><div class="head"><h2>Pengadaan Setelah SPMK</h2></div>${rows.length?`<div class="tableWrap"><table><thead><tr><th>Pengadaan</th><th>Vendor</th><th>No PKS</th><th>Tanggal PKS</th><th>Mulai</th><th>Akhir</th><th>Durasi Hari Efektif</th><th>Tata Waktu</th><th>Aksi</th></tr></thead><tbody>${rows.map(proc=>{const c=contractForV39(proc), cs=contractStatus(proc), dur=contractDuration(proc);return `<tr><td data-label="Pengadaan"><b>${esc(proc.nama)}</b><br><small>${esc(proc.bidang)}</small></td><td data-label="Vendor">${esc(proc.vendor||'-')}</td><td data-label="No PKS">${esc(c.noPks||'-')}</td><td data-label="Tanggal PKS">${fmtDateV39(c.tanggalPks)}</td><td data-label="Mulai">${fmtDateV39(c.tanggalMulai)}</td><td data-label="Akhir">${fmtDateV39(c.tanggalAkhir)}</td><td data-label="Durasi"><b>${fmtNumV39(dur)}</b> hari kerja efektif</td><td data-label="Tata Waktu"><span class="badge ${cs.color}">${esc(cs.text)}</span></td><td data-label="Aksi">${can('Masa Pelaksanaan','edit')?`<button type="button" class="btn primary small" data-contract="${proc.id}">Isi/Edit</button>`:'-'}</td></tr>`}).join('')}</tbody></table></div>`:`<div class="card empty">Belum ada pengadaan yang mencapai SPMK.</div>`}`;
+  };
+  contract=function contract(id){
+    const rows=vis().filter(spmk), proc=db.procurements.find(x=>Number(x.id)===Number(id));
+    if(!proc||!spmk(proc)) return toast('Masa Pelaksanaan baru dapat diisi setelah SPMK.');
+    document.getElementById('modalRoot').innerHTML=`<div class="modalBack"><div class="modal"><div class="modalHead"><div><h2>Edit Masa Pelaksanaan Pekerjaan</h2><small>${esc(proc.nama)} • durasi dan status otomatis dihitung</small></div><button type="button" class="btn ghost small" id="closeContractModal">Tutup</button></div><div class="modalBody"><div class="help ok">Tanggal lama otomatis dimuat. Setelah tanggal mulai atau akhir dipilih, Durasi Hari Efektif dan Status Tata Waktu langsung terisi.</div><div style="height:14px"></div>${contractForm(rows,id)}</div></div></div>`;
+    const close=document.getElementById('closeContractModal'); if(close) close.onclick=()=>document.getElementById('modalRoot').innerHTML='';
+    bindContractForm();
+  };
+
+  const bindPageBeforeV39=typeof bindPage==='function'?bindPage:null;
+  if(bindPageBeforeV39){
+    bindPage=function bindPage(){
+      try{bindPageBeforeV39();}catch(e){console.warn(e);}
+      if(document.getElementById('contractForm')) bindContractForm();
+    };
+  }
+  document.addEventListener('input',ev=>{if(ev.target?.matches?.('#contractTanggalMulai,#contractTanggalAkhir,#contractTanggalPks')) setTimeout(updateContractPreview,0);},true);
+  document.addEventListener('change',ev=>{if(ev.target?.matches?.('#contractTanggalMulai,#contractTanggalAkhir,#contractTanggalPks,#contractProc')) setTimeout(updateContractPreview,0);},true);
+  document.addEventListener('click',ev=>{if(ev.target?.closest?.('[data-set],[data-clear],[data-mpb-date-button]')) setTimeout(updateContractPreview,100);},true);
+
+  try{
+    normalizeAllContractsV39();
+    save();
+    window.contractDuration=contractDuration;
+    window.contractElapsed=contractElapsed;
+    window.contractStatus=contractStatus;
+    window.updateContractPreview=updateContractPreview;
+    window.normalizeDateV39=normalizeDateV39;
+    window.workDaysInclusiveV39=workDaysInclusiveV39;
+    window.masa=masa;
+    window.contract=contract;
+    render();
+  }catch(e){console.error('Patch v39 durasi/status tata waktu gagal',e);}
+})();
