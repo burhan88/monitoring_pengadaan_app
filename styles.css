@@ -170,3 +170,14 @@ input[type="file"]{padding:9px;background:#fff}
 .mpbDateEditorV37 input:focus,.mpbDateEditorV37 select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.14)}
 .mpbDateCalendarV37{padding-top:14px}
 @media(max-width:420px){.mpbDatePickerV37{width:100%}.mpbDateEditorV37{grid-template-columns:1fr;gap:8px;padding:12px 16px 4px}.mpbDateEditorV37 input,.mpbDateEditorV37 select{height:40px}}
+
+/* === PATCH v41: badge tata waktu tetap terbaca pada layar kecil === */
+@media(max-width:720px){
+  td[data-label="Tata Waktu"] .badge,
+  td[data-label="Status"] .badge{
+    white-space:normal;
+    line-height:1.35;
+    max-width:240px;
+    text-align:left;
+  }
+}
